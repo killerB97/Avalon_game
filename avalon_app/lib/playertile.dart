@@ -1,5 +1,6 @@
 import 'package:avalonapp/models/player.dart';
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
 
 class playerTile extends StatelessWidget {
   final Player players;
@@ -9,13 +10,13 @@ class playerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
+      height: 65.0.sp,
       child: Padding(
-        padding: const EdgeInsets.only(right: 30, left: 30, bottom: 10),
+        padding: EdgeInsets.only(right: 6.0.w, left: 6.0.w, bottom: 2.0.h),
         child: Card(
           child: ListTile(
             title: Text((index + 1).toString() + '.  ' + players.username,
-                style: TextStyle(fontFamily: 'hash', fontSize: 30)),
+                style: TextStyle(fontFamily: 'hash', fontSize: 21.0.sp)),
             trailing: CircleAvatar(
               backgroundImage:
                   AssetImage('images/av' + (index + 1).toString() + '.jpeg'),
