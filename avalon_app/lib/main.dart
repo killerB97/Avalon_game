@@ -15,6 +15,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:splashscreen/splashscreen.dart';
 import 'screens/role_select.dart';
+import 'screens/round_table.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:avalonapp/models/settings.dart';
 import 'dart:async';
@@ -47,7 +48,13 @@ class Avalon extends StatefulWidget {
 }
 
 class _AvalonState extends State<Avalon> {
-  createAlertDialog(BuildContext context, var mode) {
+  String generateGameKey() {
+    for (WordPair i in generateWordPairs(maxSyllables: 2).take(1)) {
+      return i.toString();
+    }
+  }
+
+  createAlertDialog(BuildContext context, var mode, String key) {
     Size size = MediaQuery.of(context).size;
     print(size.height);
     print(size.width);
@@ -58,6 +65,7 @@ class _AvalonState extends State<Avalon> {
     int player_no;
     TextEditingController gamekey = new TextEditingController();
     TextEditingController user = new TextEditingController();
+
     return showDialog(
         context: context,
         builder: (context) {
@@ -75,36 +83,67 @@ class _AvalonState extends State<Avalon> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(height: 2.3.h),
-                      TextField(
-                        onChanged: (gamekey) {
-                          setState(() => mode == 'host'
-                              ? checkHost = false
-                              : checkJoin = true);
-                          setState(() => checkLock = false);
-                        },
-                        decoration: InputDecoration(
-                            hintText: "Game Key",
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            errorText: mode == 'host'
-                                ? checkHost == true
-                                    ? 'Game key already exists, try again'
-                                    : null
-                                : checkJoin == false
-                                    ? 'Game does not exist, try again'
-                                    : checkLock == true
-                                        ? 'Game has already started, join another'
-                                        : null,
-                            errorBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.red),
-                                borderRadius: BorderRadius.circular(20.0)),
-                            enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.yellow),
-                                borderRadius: BorderRadius.circular(20.0)),
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.yellow),
-                                borderRadius: BorderRadius.circular(20.0))),
-                        controller: gamekey,
-                      ),
+                      mode == 'join'
+                          ? TextField(
+                              onChanged: (gamekey) {
+                                setState(() => mode == 'host'
+                                    ? checkHost = false
+                                    : checkJoin = true);
+                                setState(() => checkLock = false);
+                              },
+                              decoration: InputDecoration(
+                                  hintText: "Game Key",
+                                  hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontFamily: 'vin',
+                                      fontSize: 15.0.sp),
+                                  errorText: mode == 'host'
+                                      ? checkHost == true
+                                          ? 'Game key already exists, try again'
+                                          : null
+                                      : checkJoin == false
+                                          ? 'Game does not exist, try again'
+                                          : checkLock == true
+                                              ? 'Game has already started, join another'
+                                              : null,
+                                  errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.red),
+                                      borderRadius:
+                                          BorderRadius.circular(20.0)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.yellow),
+                                      borderRadius:
+                                          BorderRadius.circular(20.0)),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.yellow),
+                                      borderRadius:
+                                          BorderRadius.circular(20.0))),
+                              controller: gamekey,
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.white,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(20))),
+                              child: Column(
+                                children: [
+                                  Text('Game Key',
+                                      style: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontFamily: 'vin',
+                                          fontSize: 20.0.sp)),
+                                  Text(key,
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'vin',
+                                          fontSize: 18.0.sp)),
+                                ],
+                              ),
+                            ),
                       SizedBox(height: 3.46.h),
                       TextField(
                         onChanged: (user) {
@@ -112,7 +151,10 @@ class _AvalonState extends State<Avalon> {
                         },
                         decoration: InputDecoration(
                             hintText: "Username",
-                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontFamily: 'vin',
+                                fontSize: 15.0.sp),
                             errorText: checkUser == true
                                 ? 'Username already exists'
                                 : null,
@@ -136,9 +178,10 @@ class _AvalonState extends State<Avalon> {
                           side: BorderSide(color: Colors.white),
                         ),
                         onPressed: () async {
-                          DatabaseService game =
-                              DatabaseService(game_key: gamekey.text);
-
+                          DatabaseService game;
+                          mode == 'host'
+                              ? game = DatabaseService(game_key: key)
+                              : game = DatabaseService(game_key: gamekey.text);
                           // Hosting a Game
                           if (mode == 'host') {
                             game.connectToGame();
@@ -271,7 +314,15 @@ class _AvalonState extends State<Avalon> {
                 padding: EdgeInsets.all(2.0.h),
                 color: Colors.transparent,
                 onPressed: () {
-                  createAlertDialog(context, 'host');
+                  print('PINEAPPLE');
+                  generateGameKey();
+                  String key = generateGameKey();
+                  DatabaseService keyCheck = DatabaseService(game_key: key);
+                  while (keyCheck.checkRoom() == true) {
+                    key = generateGameKey();
+                    keyCheck = DatabaseService(game_key: key);
+                  }
+                  createAlertDialog(context, 'host', key);
                 },
                 child: Text('Host Game',
                     style: TextStyle(
@@ -287,7 +338,7 @@ class _AvalonState extends State<Avalon> {
                 padding: EdgeInsets.all(2.0.h),
                 color: Colors.transparent,
                 onPressed: () {
-                  createAlertDialog(context, 'join');
+                  createAlertDialog(context, 'join', '');
                 },
                 child: Text('Join Game',
                     style: TextStyle(
@@ -405,22 +456,11 @@ class _RoomState extends State<Room> {
         errorText =
             'The number of players playing and characters selected must be equal';
       });
-    }
-    if (victCount != charReq[numPlayers][0] &&
+    } else if (victCount != charReq[numPlayers][0] &&
         vicsCount != charReq[numPlayers][1]) {
       updateState(() {
         errorText =
             'Incorrect number of Virtuous and Vicious characters selected';
-      });
-    }
-    if (victCount != charReq[numPlayers][0]) {
-      updateState(() {
-        errorText = 'Incorrect number of Virtuous characters selected';
-      });
-    }
-    if (vicsCount != charReq[numPlayers][1]) {
-      updateState(() {
-        errorText = 'Incorrect number of Vicious characters selected';
       });
     }
   }
@@ -887,25 +927,53 @@ class _RoomState extends State<Room> {
                                 bottomLeft: Radius.circular(20.0),
                                 bottomRight: Radius.circular(20.0))),
                         //color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            FlatButton(
-                                color: Colors.yellow,
-                                onPressed: () {
-                                  _onBackPressed(context, head);
-                                },
-                                child: Icon(Icons.exit_to_app_rounded,
-                                    size: 21.0.sp, color: Colors.grey[800])),
-                            SizedBox(width: 3.5.w),
-                            Text(
-                              'Knights in waiting',
-                              style: TextStyle(
-                                  fontSize: 25.0.sp,
-                                  fontFamily: 'knight',
-                                  color: Colors.grey[800],
-                                  decoration: TextDecoration.none,
-                                  fontWeight: FontWeight.normal),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                FlatButton(
+                                    color: Colors.yellow,
+                                    onPressed: () {
+                                      _onBackPressed(context, head);
+                                    },
+                                    child: Icon(Icons.exit_to_app_rounded,
+                                        size: 6.5.w, color: Colors.grey[800])),
+                                SizedBox(width: 5.5.w),
+                                Text(
+                                  'Knights in waiting',
+                                  style: TextStyle(
+                                      fontSize: 8.0.w,
+                                      fontFamily: 'knight',
+                                      color: Colors.grey[800],
+                                      decoration: TextDecoration.none,
+                                      fontWeight: FontWeight.normal),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Game Key: ',
+                                  style: TextStyle(
+                                      fontSize: 6.0.w,
+                                      fontFamily: 'vin',
+                                      color: Colors.grey[600],
+                                      decoration: TextDecoration.none,
+                                      fontWeight: FontWeight.normal),
+                                ),
+                                Text(
+                                  game.game_key,
+                                  style: TextStyle(
+                                      fontSize: 6.0.w,
+                                      fontFamily: 'vin',
+                                      color: Colors.grey[800],
+                                      decoration: TextDecoration.none,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
                           ],
                         )),
@@ -1011,6 +1079,11 @@ class _LoadingState extends State<Loading> {
     if (head == 'join' && roleSelect.length == 0) {
       setRolesList(setting);
     }
+    if (head == 'host') {
+      game.updateGameQuest();
+      game.voteTracker(rounds: 'Round1');
+      game.updateGamePolicy();
+    }
     print(player_list);
     print(player_no);
     var duration = new Duration(seconds: 7);
@@ -1026,7 +1099,7 @@ class _LoadingState extends State<Loading> {
     Navigator.push(
       context,
       RevealRoute(
-        page: roleSelection(roleSelect, player_no, player_list, game),
+        page: roleSelection(roleSelect, player_no, player_list, game, head),
         maxRadius: size.height * 1.46,
         centerAlignment: Alignment.centerRight,
       ),
@@ -1038,7 +1111,7 @@ class _LoadingState extends State<Loading> {
     return WillPopScope(
       onWillPop: () {},
       child: SplashScreen(
-        seconds: 15,
+        seconds: 10,
         backgroundColor: Color.fromRGBO(14, 18, 23, 1),
         image: Image.asset('images/loader1.gif'),
         loaderColor: Color.fromRGBO(14, 18, 23, 1),

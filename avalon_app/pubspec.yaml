@@ -22,9 +22,9 @@ environment:
 
 dependencies:
   rounded_floating_app_bar: ^0.1.0
-  cloud_firestore: ^0.14.3+1
+  cloud_firestore: ^0.16.0
   provider: ^4.3.2+2
-  firebase_core: ^0.5.2
+  firebase_core: ^0.7.0
   english_words: ^3.1.5
   get: ^3.17.1
   flutter_phoenix: "^0.1.0"
@@ -35,6 +35,13 @@ dependencies:
   device_preview: ^0.5.5
   responsive_framework: ^0.0.14
   sizer: ^1.1.8
+  lite_rolling_switch: ^0.1.1
+  smart_flare: any
+  flare_flutter: any
+  local_hero: ^0.1.0
+  delayed_display: ^1.1.0
+  shape_of_view: ^1.0.2
+  styled_text: ^1.0.3+3
   flutter:
     sdk: flutter
 
@@ -178,17 +185,17 @@ flutter:
       fonts:
         - asset: fonts/cali.ttf
 
-    - family: stamp
+    - family: tom
       fonts:
-        - asset: fonts/stamp.ttf
+        - asset: fonts/tom.ttf
 
     - family: cut
       fonts:
         - asset: fonts/cut.ttf
 
-    - family: horse
+    - family: am
       fonts:
-        - asset: fonts/horse.ttf
+        - asset: fonts/am.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages

@@ -1,5 +1,10 @@
+import 'package:avalonapp/screens/role_select.dart';
+import 'package:avalonapp/screens/round_table.dart';
+import 'package:avalonapp/services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:avalonapp/circleReveal.dart';
+import 'round_table.dart';
 
 class roleDescription extends StatelessWidget {
   String assetPath;
@@ -7,9 +12,23 @@ class roleDescription extends StatelessWidget {
   String index;
   String roleName;
   String description;
+  String head;
+  DatabaseService game;
+  List<String> player_list;
+  String player_no;
+  List<String> users;
 
   roleDescription(
-      this.assetPath, this.color, this.index, this.roleName, this.description);
+      this.assetPath,
+      this.color,
+      this.index,
+      this.roleName,
+      this.description,
+      this.head,
+      this.player_list,
+      this.users,
+      this.player_no,
+      this.game);
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -55,7 +74,7 @@ class roleDescription extends StatelessWidget {
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Colors.grey[800],
-                        fontFamily: 'holiday',
+                        fontFamily: 'am',
                         fontSize: 25.0.sp,
                         decoration: TextDecoration.none,
                         fontWeight: FontWeight.normal),
@@ -101,7 +120,17 @@ class roleDescription extends StatelessWidget {
                 padding: EdgeInsets.only(
                     left: 2.43.w, right: 2.43.w, top: 1.73.h, bottom: 1.16.h),
                 color: color,
-                onPressed: () async {},
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    RevealRoute(
+                      page: roundTable(
+                          player_list, 'host', users, player_no, game),
+                      maxRadius: size.height * 1.17,
+                      centerAlignment: Alignment.bottomRight,
+                    ),
+                  );
+                },
                 child: Text('Enter Round Table',
                     style: TextStyle(
                         color: Colors.white,

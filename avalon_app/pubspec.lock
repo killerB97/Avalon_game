@@ -42,21 +42,21 @@ packages:
       name: cloud_firestore
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.14.3+1"
+    version: "0.16.0"
   cloud_firestore_platform_interface:
     dependency: transitive
     description:
       name: cloud_firestore_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.0"
+    version: "3.0.1"
   cloud_firestore_web:
     dependency: transitive
     description:
       name: cloud_firestore_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.1+1"
+    version: "0.3.0+1"
   collection:
     dependency: transitive
     description:
@@ -78,6 +78,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
+  delayed_display:
+    dependency: "direct main"
+    description:
+      name: delayed_display
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0"
   device_frame:
     dependency: transitive
     description:
@@ -126,21 +133,35 @@ packages:
       name: firebase_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.2+1"
+    version: "0.7.0"
   firebase_core_platform_interface:
     dependency: transitive
     description:
       name: firebase_core_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
+    version: "3.0.1"
   firebase_core_web:
     dependency: transitive
     description:
       name: firebase_core_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.1+1"
+    version: "0.2.1+3"
+  flare_dart:
+    dependency: transitive
+    description:
+      name: flare_dart
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.3.4"
+  flare_flutter:
+    dependency: "direct main"
+    description:
+      name: flare_flutter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.6"
   flip_card:
     dependency: "direct main"
     description:
@@ -245,6 +266,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.1"
+  lite_rolling_switch:
+    dependency: "direct main"
+    description:
+      name: lite_rolling_switch
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
+  local_hero:
+    dependency: "direct main"
+    description:
+      name: local_hero
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   matcher:
     dependency: transitive
     description:
@@ -385,6 +420,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.0"
+  shape_of_view:
+    dependency: "direct main"
+    description:
+      name: shape_of_view
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   shared_preferences:
     dependency: transitive
     description:
@@ -439,6 +481,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
+  smart_flare:
+    dependency: "direct main"
+    description:
+      name: smart_flare
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.9+1"
   source_span:
     dependency: transitive
     description:
@@ -474,6 +523,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0-nullsafety.1"
+  styled_text:
+    dependency: "direct main"
+    description:
+      name: styled_text
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.3+3"
   term_glyph:
     dependency: transitive
     description:
@@ -523,6 +579,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.5.1"
+  xmlstream:
+    dependency: transitive
+    description:
+      name: xmlstream
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.12.0"
 sdks:
   dart: ">=2.10.0 <2.11.0"
   flutter: ">=1.18.0-6.0.pre <2.0.0"

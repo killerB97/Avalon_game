@@ -2,24 +2,27 @@ import 'package:avalonapp/player_list.dart';
 import 'package:avalonapp/services/database.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:avalonapp/models/player.dart';
 import 'package:avalonapp/screens/role_descrip.dart';
 import 'package:interpolation/interpolation.dart';
 import 'dart:async';
+import 'package:styled_text/styled_text.dart';
 
 class roleSelection extends StatefulWidget {
   List<String> characterList;
   int player_no;
   List<String> player_list;
   DatabaseService game;
+  String head;
 
-  roleSelection(
-      this.characterList, this.player_no, this.player_list, this.game);
+  roleSelection(this.characterList, this.player_no, this.player_list, this.game,
+      this.head);
 
   @override
   _roleSelectionState createState() =>
-      _roleSelectionState(characterList, player_no, player_list, game);
+      _roleSelectionState(characterList, player_no, player_list, game, head);
 }
 
 class _roleSelectionState extends State<roleSelection> {
@@ -27,9 +30,11 @@ class _roleSelectionState extends State<roleSelection> {
   int player_no;
   List<String> player_list;
   DatabaseService game;
+  String head;
+  List<String> userList;
 
-  _roleSelectionState(
-      this.characterList, this.player_no, this.player_list, this.game);
+  _roleSelectionState(this.characterList, this.player_no, this.player_list,
+      this.game, this.head);
 
   Map characterMapping = {};
   bool flipped = true;
@@ -46,17 +51,17 @@ class _roleSelectionState extends State<roleSelection> {
 
   Map descText = {
     'Percival':
-        'You are Percival.\n\nMorgana fogs your vision from identifying Merlin. Choose wisely between {0} and {1}',
+        'You are Percival.\n\nMorgana fogs your vision from identifying Merlin. Choose wisely between {0} {1}',
     'Mordred':
-        'You are Mordred.\n\nHidden from the eyes of the Virtuous. You unleash evil with your minions {0} and {1}. Identity of Oberon is hidden from you',
+        'You are Mordred.\n\nHidden from the eyes of the Virtuous. You unleash evil with your minions {0} {1}. Identity of Oberon is hidden from you',
     'Merlin':
-        'You are Merlin.\n\nYou are instrumental in driving the forces of evil out. You have identified {0} and {1} to be the forces of evil. But their overlord Mordred is hidden from you',
+        'You are Merlin.\n\nYou are instrumental in driving the forces of evil out. You have identified {0} {1} to be the forces of evil. But their overlord Mordred is hidden from you',
     'Morgana':
-        'You are Morgana.\n\nYou confuse Percival and bring glory to Mordred. You unleash evil with your minions {0} and {1}. Identity of Oberon is hidden from you',
+        'You are Morgana.\n\nYou confuse Percival and bring glory to Mordred. You unleash evil with your minions {0} {1}. Identity of Oberon is hidden from you',
     'Oberon':
         'You are Oberon.\n\n You are the wild card that confuses the Virtuous and the Vicious',
     'Minion':
-        'You are a Minion.\n\nUnleash evil with {0} and {1}. Oberon is hidden from you',
+        'You are a Minion.\n\nUnleash evil with {0} {1}. Oberon is hidden from you',
     'Loyal Knight':
         'You are a Loyal Knight.\n\nFaithful to King Arthur in his quest to root out all evil'
   };
@@ -93,9 +98,17 @@ class _roleSelectionState extends State<roleSelection> {
     if (depend.length > 0) {
       Map<String, dynamic> format = {'0': '', '1': ''};
       var inter = Interpolation();
-      format['0'] =
-          depend.sublist(0, depend.length - 1).join(', ').toUpperCase();
-      format['1'] = depend.last.toUpperCase();
+      if (depend.length == 1) {
+        depend =
+            depend.map((x) => x[0].toUpperCase() + x.substring(1)).toList();
+        format['0'] = depend.last;
+        format['1'] = '';
+      } else {
+        depend =
+            depend.map((x) => x[0].toUpperCase() + x.substring(1)).toList();
+        format['0'] = depend.sublist(0, depend.length - 1).join(', ');
+        format['1'] = 'and ' + depend.last;
+      }
       print(format);
       String newDesc = inter.eval(desc, format);
       return newDesc;
@@ -175,13 +188,15 @@ class _roleSelectionState extends State<roleSelection> {
                             flipped = false;
                           });
                           createCharMap();
+                          userList = await game.getUserNames(player_list);
                           List<String> dependecyList = await widget.game
                               .getDependentChar(
                                   charDependency[widget.characterList[widget
                                       .player_list
                                       .indexOf(widget.player_no.toString())]],
-                                  characterMapping);
-
+                                  characterMapping,
+                                  userList,
+                                  player_list);
                           String description = generateDescription(
                               descText[widget.characterList[widget.player_list
                                   .indexOf(widget.player_no.toString())]],
@@ -202,7 +217,12 @@ class _roleSelectionState extends State<roleSelection> {
                                       widget.characterList[widget.player_list
                                           .indexOf(
                                               widget.player_no.toString())],
-                                      description)),
+                                      description,
+                                      head,
+                                      player_list,
+                                      userList,
+                                      player_no.toString(),
+                                      game)),
                             );
                           });
                         },

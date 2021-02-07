@@ -1,17 +1,27 @@
+import 'package:avalonapp/models/groups.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:avalonapp/models/player.dart';
 import 'package:avalonapp/models/settings.dart';
+import 'package:avalonapp/models/teams.dart';
+import 'package:avalonapp/models/policy.dart';
 
 class DatabaseService {
   String game_key;
   CollectionReference gamesCollection;
   CollectionReference gameSettings;
+  CollectionReference gameQuest;
+  CollectionReference gamePolicy;
+  CollectionReference voteTrack;
   DatabaseService({this.game_key});
+  String roundInfo;
 
   // Establish connectiomn to a game
   void connectToGame() {
     gamesCollection = FirebaseFirestore.instance.collection(game_key);
     gameSettings = FirebaseFirestore.instance.collection('Game Settings');
+    gameQuest = FirebaseFirestore.instance.collection('Game Quest');
+    voteTrack = FirebaseFirestore.instance.collection('Vote Tracker');
+    gamePolicy = FirebaseFirestore.instance.collection('Game Policy');
   }
 
   // Disconnect from a game
@@ -36,6 +46,93 @@ class DatabaseService {
         .set({'locked': locked, 'start': start, 'no_player': numPlayers});
   }
 
+// Update Game Settings
+  Future<void> updateGameQuest(
+      {List<String> teams = const [],
+      String winner = null,
+      String currLeader = null,
+      bool lock = false}) async {
+    return await gameQuest
+        .doc(game_key)
+        .set({'teams': teams, 'winner': winner, 'lock': lock});
+  }
+
+  Future<void> voteTracker(
+      {String rounds = null,
+      int ayeNo = 0,
+      int nayNo = 0,
+      List<String> ayeUsers = const [],
+      List<String> nayUsers = const []}) async {
+    roundInfo = rounds;
+    return await voteTrack.doc(game_key).set({
+      rounds: {
+        'aye': ayeNo,
+        'nay': nayNo,
+        'ayeUsers': ayeUsers,
+        'nayUsers': nayUsers
+      }
+    });
+  }
+
+  Future<void> updateVoteTracker(
+      {String rounds = null,
+      int ayeNo = 0,
+      int nayNo = 0,
+      List<String> ayeUsers = const [],
+      List<String> nayUsers = const []}) async {
+    roundInfo = rounds;
+    return await voteTrack.doc(game_key).update({
+      rounds: {
+        'aye': ayeNo,
+        'nay': nayNo,
+        'ayeUsers': ayeUsers,
+        'nayUsers': nayUsers
+      }
+    });
+  }
+
+  Future<void> updateGameQuestLock({bool lock = false}) async {
+    return await gameQuest.doc(game_key).update({'lock': lock});
+  }
+
+  Future<void> updateGameQuestAye(
+      {String rounds = null, dynamic currUser = null}) async {
+    roundInfo = rounds;
+    return await voteTrack.doc(game_key).update({
+      rounds + '.aye': FieldValue.increment(1),
+      rounds + '.ayeUsers': FieldValue.arrayUnion([currUser])
+    });
+  }
+
+  Future<void> updateGameQuestNay(
+      {String rounds = null, dynamic currUser = null}) async {
+    roundInfo = rounds;
+    return await voteTrack.doc(game_key).update({
+      rounds + '.nay': FieldValue.increment(1),
+      rounds + '.nayUsers': FieldValue.arrayUnion([currUser])
+    });
+  }
+
+// Update Game Settings
+  Future<void> updateGamePolicy({int pass = 0, int fail = 0}) async {
+    return await gamePolicy.doc(game_key).set({
+      'pass': pass,
+      'fail': fail,
+    });
+  }
+
+  Future<void> updateGamePolicyPass({String rounds = null}) async {
+    return await gamePolicy.doc(game_key).update({
+      'pass': FieldValue.increment(1),
+    });
+  }
+
+  Future<void> updateGamePolicyFail({String rounds = null}) async {
+    return await gamePolicy.doc(game_key).update({
+      'fail': FieldValue.increment(1),
+    });
+  }
+
   // Delete a game
   void deleteCollection() {
     gamesCollection.get().then((snapshot) {
@@ -56,6 +153,28 @@ class DatabaseService {
     }).toList();
   }
 
+  Teams _teamsFromSnapshot(DocumentSnapshot snapshot) {
+    return Teams(
+        teams: snapshot.data()['teams'] ?? [],
+        locked: snapshot.data()['lock'] ?? false);
+  }
+
+  Groups _groupsFromSnapshot(DocumentSnapshot snapshot) {
+    return Groups(
+      ayeGroup: snapshot.data()[roundInfo]['ayeUsers'] ?? [],
+      nayGroup: snapshot.data()[roundInfo]['nayUsers'] ?? [],
+      ayeCount: snapshot.data()[roundInfo]['aye'] ?? 0,
+      nayCount: snapshot.data()[roundInfo]['nay'] ?? 0,
+    );
+  }
+
+  Policy _policyFromSnapshot(DocumentSnapshot snapshot) {
+    return Policy(
+      passCount: snapshot.data()['pass'] ?? 0,
+      failCount: snapshot.data()['fail'] ?? 0,
+    );
+  }
+
   gameSetting _settingFromSnapshot(DocumentSnapshot snapshot) {
     return gameSetting(
         locked: snapshot.data()['locked'] ?? false,
@@ -70,6 +189,18 @@ class DatabaseService {
 
   Stream<gameSetting> get settings {
     return gameSettings.doc(game_key).snapshots().map((_settingFromSnapshot));
+  }
+
+  Stream<Teams> get teams {
+    return gameQuest.doc(game_key).snapshots().map((_teamsFromSnapshot));
+  }
+
+  Stream<Groups> get groups {
+    return voteTrack.doc(game_key).snapshots().map((_groupsFromSnapshot));
+  }
+
+  Stream<Policy> get policy {
+    return gamePolicy.doc(game_key).snapshots().map((_policyFromSnapshot));
   }
 
   // Check if room is empty or not
@@ -120,7 +251,7 @@ class DatabaseService {
   // Update player character
   Future<List<String>> allocateRole(List<String> roles) async {
     List<String> player_list = [];
-    //roles.shuffle();
+    roles.shuffle();
     int docid = 1;
     int tracker = 0;
     while (tracker != roles.length) {
@@ -151,18 +282,22 @@ class DatabaseService {
   }
 
 // Get User Name by document ID
-  Future<String> getUserName(String docid) async {
-    var role = await gamesCollection.doc(docid).get();
-    if (role.exists == true) {
-      return role.data()['username'];
-    } else {
-      return null;
+  Future<List<String>> getUserNames(List<String> player_list) async {
+    List<String> users = [];
+    for (int i = 0; i < player_list.length; i++) {
+      var role = await gamesCollection.doc(player_list[i]).get();
+      if (role.exists == true) {
+        users.add(role.data()['username']);
+      } else {
+        users.add('');
+      }
     }
+    return users;
   }
 
 // Get Usernames of shuffled Dependecies
-  Future<List<String>> getDependentChar(
-      List<String> dependencies, Map charMap) async {
+  Future<List<String>> getDependentChar(List<String> dependencies, Map charMap,
+      List<String> users, List<String> player_list) async {
     List<String> userList = [];
     print(dependencies);
     print(charMap);
@@ -171,7 +306,7 @@ class DatabaseService {
       print(char);
       if (charMap.containsKey(char)) {
         for (String docid in charMap[char]) {
-          String user = await getUserName(docid);
+          String user = users[player_list.indexOf(docid)];
           userList.add(user);
         }
       }
