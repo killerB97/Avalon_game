@@ -17,6 +17,7 @@ class roleDescription extends StatelessWidget {
   List<String> player_list;
   String player_no;
   List<String> users;
+  List<String> roleList;
 
   roleDescription(
       this.assetPath,
@@ -27,6 +28,7 @@ class roleDescription extends StatelessWidget {
       this.head,
       this.player_list,
       this.users,
+      this.roleList,
       this.player_no,
       this.game);
   @override
@@ -124,8 +126,8 @@ class roleDescription extends StatelessWidget {
                   Navigator.push(
                     context,
                     RevealRoute(
-                      page: roundTable(
-                          player_list, 'host', users, player_no, game),
+                      page: roundTable(player_list, 'host', users, player_no,
+                          game, roleName, roleList),
                       maxRadius: size.height * 1.17,
                       centerAlignment: Alignment.bottomRight,
                     ),

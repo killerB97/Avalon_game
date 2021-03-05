@@ -1,3 +1,4 @@
+import 'package:avalonapp/models/player_roles.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +19,7 @@ import 'screens/role_select.dart';
 import 'screens/round_table.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:avalonapp/models/settings.dart';
+import 'package:avalonapp/screens/winner.dart';
 import 'dart:async';
 
 void main() async {
@@ -50,7 +52,7 @@ class Avalon extends StatefulWidget {
 class _AvalonState extends State<Avalon> {
   String generateGameKey() {
     for (WordPair i in generateWordPairs(maxSyllables: 2).take(1)) {
-      return i.toString();
+      return i.toString().toLowerCase();
     }
   }
 
@@ -62,6 +64,7 @@ class _AvalonState extends State<Avalon> {
     bool checkJoin = true;
     bool checkUser = false;
     bool checkLock = false;
+    bool firstClick = true;
     int player_no;
     TextEditingController gamekey = new TextEditingController();
     TextEditingController user = new TextEditingController();
@@ -178,86 +181,90 @@ class _AvalonState extends State<Avalon> {
                           side: BorderSide(color: Colors.white),
                         ),
                         onPressed: () async {
-                          DatabaseService game;
-                          mode == 'host'
-                              ? game = DatabaseService(game_key: key)
-                              : game = DatabaseService(game_key: gamekey.text);
-                          // Hosting a Game
-                          if (mode == 'host') {
-                            game.connectToGame();
-                            checkHost = await game.checkRoom();
-                            checkUser = await game.checkUserName(user.text);
-                            // Check if room is already being hosted
-                            if (checkHost == false && checkUser == false) {
-                              await game.updateGameSettings();
-                              await game.updateUserData(user.text, '1');
-                              player_no = 1;
-                            } else {
-                              if (checkHost == true) {
-                                setState(() => checkHost = true);
-                              }
-                              if (checkUser == true) {
-                                setState(() => checkUser = true);
-                              }
-                            }
-                          }
-
-                          // Joining a Game
-                          else {
-                            checkJoin = await game.checkRoom();
-                            print(checkJoin);
-                            checkUser = await game.checkUserName(user.text);
-                            print(checkUser);
-                            checkLock = await game.checkLocked(gamekey.text);
-                            print(checkLock);
-                            if (checkJoin == true &&
-                                checkUser == false &&
-                                checkLock == false) {
+                          if (firstClick) {
+                            DatabaseService game;
+                            mode == 'host'
+                                ? game = DatabaseService(game_key: key)
+                                : game =
+                                    DatabaseService(game_key: gamekey.text);
+                            // Hosting a Game
+                            if (mode == 'host') {
                               game.connectToGame();
-                              for (int i = 1; i <= 10; i += 1) {
-                                final playerCheck = await FirebaseFirestore
-                                    .instance
-                                    .collection(gamekey.text)
-                                    .doc(i.toString())
-                                    .get();
-
-                                if (playerCheck.exists) {
-                                  continue;
-                                } else {
-                                  player_no = i;
-                                  print(user.text);
-                                  await game.updateUserData(
-                                      user.text, i.toString());
-                                  break;
+                              checkHost = await game.checkRoom();
+                              checkUser = await game.checkUserName(user.text);
+                              // Check if room is already being hosted
+                              if (checkHost == false && checkUser == false) {
+                                await game.updateGameSettings();
+                                await game.updateUserData(user.text, '1');
+                                player_no = 1;
+                              } else {
+                                if (checkHost == true) {
+                                  setState(() => checkHost = true);
+                                }
+                                if (checkUser == true) {
+                                  setState(() => checkUser = true);
                                 }
                               }
-                            } else {
-                              if (checkJoin == false) {
-                                setState(() => checkJoin = false);
-                              }
-                              if (checkUser == true) {
-                                setState(() => checkUser = true);
-                              }
-                              if (checkLock == true) {
-                                setState(() => checkLock = true);
+                            }
+
+                            // Joining a Game
+                            else {
+                              checkJoin = await game.checkRoom();
+                              print(checkJoin);
+                              checkUser = await game.checkUserName(user.text);
+                              print(checkUser);
+                              checkLock = await game.checkLocked(gamekey.text);
+                              print(checkLock);
+                              if (checkJoin == true &&
+                                  checkUser == false &&
+                                  checkLock == false) {
+                                game.connectToGame();
+                                for (int i = 1; i <= 10; i += 1) {
+                                  final playerCheck = await FirebaseFirestore
+                                      .instance
+                                      .collection(gamekey.text)
+                                      .doc(i.toString())
+                                      .get();
+
+                                  if (playerCheck.exists) {
+                                    continue;
+                                  } else {
+                                    player_no = i;
+                                    print(user.text);
+                                    await game.updateUserData(
+                                        user.text, i.toString());
+                                    break;
+                                  }
+                                }
+                              } else {
+                                if (checkJoin == false) {
+                                  setState(() => checkJoin = false);
+                                }
+                                if (checkUser == true) {
+                                  setState(() => checkUser = true);
+                                }
+                                if (checkLock == true) {
+                                  setState(() => checkLock = true);
+                                }
                               }
                             }
-                          }
-                          if ((checkHost == false &&
-                                  checkUser == false &&
-                                  mode == 'host') ||
-                              (checkJoin == true &&
-                                  checkUser == false &&
-                                  checkLock == false &&
-                                  mode == 'join')) {
-                            Navigator.push(
-                              context,
-                              RevealRoute(
-                                page: Room(mode, game, player_no),
-                                maxRadius: size.height * 1.17,
-                                centerAlignment: Alignment.bottomRight,
-                              ),
-                            );
+                            if ((checkHost == false &&
+                                    checkUser == false &&
+                                    mode == 'host') ||
+                                (checkJoin == true &&
+                                    checkUser == false &&
+                                    checkLock == false &&
+                                    mode == 'join')) {
+                              Navigator.push(
+                                context,
+                                RevealRoute(
+                                  page: Room(mode, game, player_no),
+                                  maxRadius: size.height * 1.17,
+                                  centerAlignment: Alignment.bottomRight,
+                                ),
+                              );
+                              firstClick = false;
+                            }
                           }
                         },
                         child: mode == 'host'
@@ -314,7 +321,6 @@ class _AvalonState extends State<Avalon> {
                 padding: EdgeInsets.all(2.0.h),
                 color: Colors.transparent,
                 onPressed: () {
-                  print('PINEAPPLE');
                   generateGameKey();
                   String key = generateGameKey();
                   DatabaseService keyCheck = DatabaseService(game_key: key);
@@ -374,12 +380,13 @@ class _RoomState extends State<Room> {
   DatabaseService game;
   List<String> player_list = [];
   bool exit = false;
+  playerRole playerRoles;
 
   _RoomState(this.head, this.game, this.player_no);
   List<String> _characterCards = [
-    'images/percival.jpg',
-    'images/mordred.jpg',
     'images/merlin.jpg',
+    'images/mordred.jpg',
+    'images/percival.jpg',
     'images/morgana.jpg',
     'images/knight.jpg',
     'images/oberon.jpg',
@@ -387,9 +394,9 @@ class _RoomState extends State<Room> {
     'images/minion.jpg'
   ];
   List<String> _characterNames = [
-    'Percival',
-    'Mordred',
     'Merlin',
+    'Mordred',
+    'Percival',
     'Morgana',
     'Loyal Knight',
     'Oberon',
@@ -447,7 +454,6 @@ class _RoomState extends State<Room> {
         }
       });
     }
-    print(_rolesList);
   }
 
   Future<void> errorCheck(StateSetter updateState, int numPlayers) async {
@@ -781,7 +787,7 @@ class _RoomState extends State<Room> {
                         if (numPlayers == _rolesList.length) {
                           errorCheck(state, numPlayers);
                           if (errorText == '') {
-                            player_list = await game.allocateRole(_rolesList);
+                            playerRoles = await game.allocateRole(_rolesList);
                             game.updateGameSettings(
                                 start: true,
                                 locked: true,
@@ -789,8 +795,14 @@ class _RoomState extends State<Room> {
                             Navigator.push(
                               context,
                               RevealRoute(
-                                page: Loading(size, _rolesList, game, setting,
-                                    head, player_no, player_list),
+                                page: Loading(
+                                    size,
+                                    playerRoles.role_list,
+                                    game,
+                                    setting,
+                                    head,
+                                    player_no,
+                                    playerRoles.player_list),
                                 maxRadius: size.height * 1.17,
                                 centerAlignment: Alignment.bottomCenter,
                               ),
@@ -878,7 +890,7 @@ class _RoomState extends State<Room> {
       value: game.settings,
       child:
           Consumer<gameSetting>(builder: (context, gameSetting setting, child) {
-        if (setting.start == true) {
+        if (setting.start == true && head == 'join') {
           return Loading(
               size, _rolesList, game, setting, head, player_no, player_list);
         } else {
@@ -1084,8 +1096,6 @@ class _LoadingState extends State<Loading> {
       game.voteTracker(rounds: 'Round1');
       game.updateGamePolicy();
     }
-    print(player_list);
-    print(player_no);
     var duration = new Duration(seconds: 7);
     return new Timer(duration, route);
   }
@@ -1096,6 +1106,9 @@ class _LoadingState extends State<Loading> {
   }
 
   route() {
+    print('PAPADAM');
+    print(roleSelect);
+    print(player_list);
     Navigator.push(
       context,
       RevealRoute(

@@ -42,6 +42,9 @@ dependencies:
   delayed_display: ^1.1.0
   shape_of_view: ^1.0.2
   styled_text: ^1.0.3+3
+  fab_circular_menu: ^1.0.1
+  material_design_icons_flutter: ^4.0.5855
+  concentric_transition: ^0.1.1
   flutter:
     sdk: flutter
 

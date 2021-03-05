@@ -1,5 +1,6 @@
 class Teams {
   List<dynamic> teams;
   bool locked;
-  Teams({this.teams, this.locked});
+  String winner;
+  Teams({this.teams, this.locked, this.winner});
 }

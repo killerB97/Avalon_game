@@ -4,6 +4,7 @@ import 'package:avalonapp/models/player.dart';
 import 'package:avalonapp/models/settings.dart';
 import 'package:avalonapp/models/teams.dart';
 import 'package:avalonapp/models/policy.dart';
+import 'package:avalonapp/models/player_roles.dart';
 
 class DatabaseService {
   String game_key;
@@ -49,8 +50,7 @@ class DatabaseService {
 // Update Game Settings
   Future<void> updateGameQuest(
       {List<String> teams = const [],
-      String winner = null,
-      String currLeader = null,
+      String winner = '',
       bool lock = false}) async {
     return await gameQuest
         .doc(game_key)
@@ -93,6 +93,10 @@ class DatabaseService {
 
   Future<void> updateGameQuestLock({bool lock = false}) async {
     return await gameQuest.doc(game_key).update({'lock': lock});
+  }
+
+  Future<void> updateGameQuestWinner({String winner = ''}) async {
+    return await gameQuest.doc(game_key).update({'winner': winner});
   }
 
   Future<void> updateGameQuestAye(
@@ -156,7 +160,8 @@ class DatabaseService {
   Teams _teamsFromSnapshot(DocumentSnapshot snapshot) {
     return Teams(
         teams: snapshot.data()['teams'] ?? [],
-        locked: snapshot.data()['lock'] ?? false);
+        locked: snapshot.data()['lock'] ?? false,
+        winner: snapshot.data()['winner'] ?? '');
   }
 
   Groups _groupsFromSnapshot(DocumentSnapshot snapshot) {
@@ -249,7 +254,7 @@ class DatabaseService {
   }
 
   // Update player character
-  Future<List<String>> allocateRole(List<String> roles) async {
+  Future<playerRole> allocateRole(List<String> roles) async {
     List<String> player_list = [];
     roles.shuffle();
     int docid = 1;
@@ -265,8 +270,7 @@ class DatabaseService {
       docid++;
       tracker++;
     }
-    print('Done with allocation');
-    return player_list;
+    return playerRole(player_list: player_list, role_list: roles);
   }
 
 // Check if room locked

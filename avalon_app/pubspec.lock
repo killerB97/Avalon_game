@@ -64,6 +64,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.15.0-nullsafety.3"
+  concentric_transition:
+    dependency: "direct main"
+    description:
+      name: concentric_transition
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   convert:
     dependency: transitive
     description:
@@ -106,6 +113,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.5"
+  fab_circular_menu:
+    dependency: "direct main"
+    description:
+      name: fab_circular_menu
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -287,6 +301,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.12.10-nullsafety.1"
+  material_design_icons_flutter:
+    dependency: "direct main"
+    description:
+      name: material_design_icons_flutter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.5855"
   meta:
     dependency: transitive
     description:

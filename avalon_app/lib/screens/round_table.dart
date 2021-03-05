@@ -1,14 +1,17 @@
 import 'package:avalonapp/models/teams.dart';
 import 'package:avalonapp/player_list.dart';
+import 'package:avalonapp/screens/winner.dart';
 import 'package:avalonapp/services/database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:avalonapp/special_widgets/cool_switch.dart';
+import 'package:concentric_transition/concentric_transition.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:avalonapp/models/groups.dart';
 import 'package:avalonapp/models/policy.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:smart_flare/smart_flare.dart';
 //import 'package:avalonapp/special_widgets/circle_char.dart';
 import 'package:collection/collection.dart';
@@ -16,6 +19,7 @@ import 'package:local_hero/local_hero.dart';
 import 'package:flare_flutter/flare_controls.dart';
 import 'package:delayed_display/delayed_display.dart';
 import 'package:shape_of_view/shape_of_view.dart';
+import 'package:avalonapp/circleReveal.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -25,10 +29,13 @@ class roundTable extends StatefulWidget {
   List<String> users;
   String currUser;
   DatabaseService game;
-  roundTable(this.player_list, this.head, this.users, this.currUser, this.game);
+  String role;
+  List<String> roleList;
+  roundTable(this.player_list, this.head, this.users, this.currUser, this.game,
+      this.role, this.roleList);
   @override
-  _roundTableState createState() =>
-      _roundTableState(player_list, head, users, currUser, game);
+  _roundTableState createState() => _roundTableState(
+      player_list, head, users, currUser, game, role, roleList);
 }
 
 class _roundTableState extends State<roundTable> {
@@ -37,8 +44,8 @@ class _roundTableState extends State<roundTable> {
   String flag;
   String prevAnimation = 'activate';
   Function eq = const ListEquality().equals;
-  _roundTableState(
-      this.player_list, this.head, this.users, this.currUser, this.game);
+  _roundTableState(this.player_list, this.head, this.users, this.currUser,
+      this.game, this.role, this.roleList);
   String rounds = 'Round1';
   List<String> questTeams = [];
   int leaderIndex = 0;
@@ -52,21 +59,33 @@ class _roundTableState extends State<roundTable> {
   bool resetLoad = false;
   bool resetResults = false;
   String horse;
+  int evilScore = 0;
+  int goodScore = 0;
   bool policyTrans = false;
   bool stopPolicyState = false;
+  bool endGame = false;
+  bool merlinVote = false;
+  bool lockGame = false;
   ValueNotifier<bool> error = ValueNotifier<bool>(false);
   int errorMessage = 0;
   String currentLeader;
+  String role;
+  int merlinChoice = -1;
   List<String> users;
-  //List<String> users = ['Dot', 'Sid', 'Sachin', 'DB', 'Vin'];
-  /* 'Shourya',
-    'KC',
-    'Jatin',
-    'Hamza',
-    'Nishanth',
-    'Sid',
-    'Suso'*/
   List<String> deck = [];
+  List<String> roleList;
+
+  Map charTeams = {
+    'Percival': 0,
+    'Mordred': 1,
+    'Merlin': 0,
+    'Morgana': 1,
+    'Loyal Knight': 0,
+    'Oberon': 1,
+    'Minion': 1
+  };
+
+  Map sides = {'good': 0, 'evil': 1};
 
   Map initialLocation = {
     '1': [88.0.w * 0.2 + 18.0.h, 88.0.w * 0.05 + 6.08.w],
@@ -139,6 +158,7 @@ class _roundTableState extends State<roundTable> {
   Map roundStatus = {1: null, 2: null, 3: null, 4: null, 5: null};
 
   Map roundTrack = {
+    2: [1, 1, 1, 1, 1],
     5: [2, 3, 2, 3, 3],
     6: [2, 3, 4, 3, 4],
     7: [2, 3, 3, 4, 4],
@@ -151,6 +171,31 @@ class _roundTableState extends State<roundTable> {
   void initState() {
     currentLeader = player_list[0];
     super.initState();
+  }
+
+  void resetStatus() {
+    CharStatus = {
+      '1': 'None',
+      '2': 'None',
+      '3': 'None',
+      '4': 'None',
+      '5': 'None',
+      '6': 'None',
+      '7': 'None',
+      '8': 'None',
+      '9': 'None',
+      '10': 'None'
+    };
+
+    questSlotStatus = {
+      'loc1': 'empty',
+      'loc2': 'empty',
+      'loc3': 'empty',
+      'loc4': 'empty',
+      'loc5': 'empty'
+    };
+
+    questTeams = [];
   }
 
   void callback(String rule) {
@@ -245,7 +290,6 @@ class _roundTableState extends State<roundTable> {
 
   createPolicyDialog(BuildContext context, Teams team) {
     Size size = MediaQuery.of(context).size;
-    final FlareControls controls = FlareControls();
     horse = 'load';
     return showDialog(
         barrierDismissible: false,
@@ -272,14 +316,12 @@ class _roundTableState extends State<roundTable> {
                     value: game.policy,
                     child:
                         Consumer<Policy>(builder: (context, Policy pol, child) {
-                      print(team.teams.length);
-                      print(pol.passCount);
-                      print(pol.failCount);
+                      print('PassCount: ' + pol.passCount.toString());
+                      print('FailCount: ' + pol.failCount.toString());
                       if (pol.passCount + pol.failCount == team.teams.length &&
                           stopPolicyState == false) {
                         horse = 'success';
                         stopPolicyState = true;
-                        print(resetResults);
                         Timer(Duration(milliseconds: 2000), () {
                           policy(() {
                             policyTrans = true;
@@ -291,8 +333,10 @@ class _roundTableState extends State<roundTable> {
                                     2500 * (pol.passCount + pol.failCount))),
                             () {
                           if (resetResults == false) {
+                            print('I have Entered Correctly');
                             roundPass += 1;
                             votePass = 1;
+                            print('Leader Index: ' + leaderIndex.toString());
                             leaderIndex =
                                 (leaderIndex + 1) % player_list.length;
                             rounds = 'Round' + roundPass.toString();
@@ -303,21 +347,36 @@ class _roundTableState extends State<roundTable> {
                             resetResults = true;
                             policyTrans = false;
                             deck = [];
+                            resetStatus();
                             if (currUser == currentLeader) {
                               game.updateGameQuest();
                               game.updateVoteTracker(
                                   rounds: 'Round' + roundPass.toString());
                               game.updateGamePolicy();
                               currentLeader = player_list[leaderIndex];
+                              print('Current Leader: ' + currentLeader);
                             } else {
                               setState(() {
                                 currentLeader = player_list[leaderIndex];
+                                print('Current Leader: ' + currentLeader);
                               });
                             }
                             Navigator.of(context).pop();
                             setState(() {
-                              roundStatus[roundPass - 1] =
-                                  pol.failCount >= 1 ? 'fail' : 'pass';
+                              print(CharStatus);
+                              print(questSlotStatus);
+                              roundStatus[roundPass - 1] = users.length < 7
+                                  ? pol.failCount >= 1
+                                      ? 'fail'
+                                      : 'pass'
+                                  : pol.failCount >= 2
+                                      ? 'fail'
+                                      : 'pass';
+                              if (roundStatus[roundPass - 1] == 'fail') {
+                                evilScore += 1;
+                              } else {
+                                goodScore += 1;
+                              }
                             });
                           }
                         });
@@ -415,7 +474,8 @@ class _roundTableState extends State<roundTable> {
           onTap: () {
             if (currUser == currentLeader &&
                 teams.locked == false &&
-                teams.teams.length <= teamStrength) {
+                teams.teams.length <= teamStrength &&
+                lockGame == false) {
               for (int slot = 1; slot <= 5; slot++) {
                 if (CharStatus[player_no] != 'None') {
                   if (teams.teams.length == teamStrength) {
@@ -423,6 +483,8 @@ class _roundTableState extends State<roundTable> {
                   } else {
                     callback('sub_lock');
                   }
+                  print('I am removing: ' +
+                      player_list[int.parse(player_no) - 1]);
                   questTeams.remove(player_list[int.parse(player_no) - 1]);
                   game.updateGameQuest(teams: questTeams);
                   setState(() {
@@ -441,6 +503,8 @@ class _roundTableState extends State<roundTable> {
                       break;
                     } else {
                       callback('add_lock');
+                      print('I am adding: ' +
+                          player_list[int.parse(player_no) - 1]);
                       questTeams.add(player_list[int.parse(player_no) - 1]);
                       game.updateGameQuest(teams: questTeams);
                       setState(() {
@@ -487,7 +551,7 @@ class _roundTableState extends State<roundTable> {
     );
   }
 
-  Widget gameCounts(String numb, int sel, String track) {
+  Widget gameCounts(String numb, int sel, String track, bool multiFail) {
     return track == 'quest'
         ? roundStatus[sel] != null
             ? Container(
@@ -530,12 +594,37 @@ class _roundTableState extends State<roundTable> {
                               : Color(0xffffe7a6)),
                       borderRadius: BorderRadius.all(Radius.circular(50))),
                   child: Center(
-                    child: Text(numb,
-                        style: TextStyle(
-                            fontFamily: 'hash',
-                            fontSize: 12.0.sp,
-                            color: Colors.black,
-                            decoration: TextDecoration.none)),
+                    child: multiFail
+                        ? Column(
+                            children: [
+                              Text(numb,
+                                  style: TextStyle(
+                                      fontFamily: 'hash',
+                                      fontSize: 12.0.sp,
+                                      color:
+                                          (votePass == sel || roundPass == sel)
+                                              ? Color(0xff111111)
+                                              : Colors.black,
+                                      decoration: TextDecoration.none)),
+                              Text('2 fail',
+                                  style: TextStyle(
+                                      fontFamily: 'hash',
+                                      fontSize: 6.5.sp,
+                                      color:
+                                          (votePass == sel || roundPass == sel)
+                                              ? Color(0xff111111)
+                                              : Colors.black,
+                                      decoration: TextDecoration.none)),
+                            ],
+                          )
+                        : Text(numb,
+                            style: TextStyle(
+                                fontFamily: 'hash',
+                                fontSize: 12.0.sp,
+                                color: (votePass == sel || roundPass == sel)
+                                    ? Color(0xff111111)
+                                    : Colors.black,
+                                decoration: TextDecoration.none)),
                   ),
                 ),
               )
@@ -802,7 +891,8 @@ class _roundTableState extends State<roundTable> {
             child: InkWell(
               splashColor: Colors.transparent,
               onTap: () {
-                if (team.teams.length !=
+                if (lockGame == true) {
+                } else if (team.teams.length !=
                     roundTrack[player_list.length][roundPass - 1]) {
                   callback('lock');
                 } else {
@@ -828,16 +918,16 @@ class _roundTableState extends State<roundTable> {
                               offset: Offset(0.0, 0.0)),
                         ],
                       ),
-                      child: selected
+                      child: selected //0xffffc68a
                           ? Icon(
-                              Icons.lock_rounded,
+                              MdiIcons.lock,
                               color: Colors.black,
-                              size: 2.92.h,
+                              size: 2.62.h,
                             )
                           : Icon(
-                              Icons.lock_open_rounded,
+                              MdiIcons.lockOpen,
                               color: Colors.black,
-                              size: 2.92.h,
+                              size: 2.62.h,
                             ),
                     )
                   : Container(),
@@ -1041,17 +1131,15 @@ class _roundTableState extends State<roundTable> {
                                   if (['pass', 'fail']
                                           .contains(prevAnimation) ==
                                       false) {
+                                    if (currUser == currentLeader) {
+                                      game.updateGameQuestLock(lock: selected);
+                                    }
                                     game.updateGamePolicyPass(rounds: rounds);
                                     state(() {
                                       prevAnimation = 'pass';
                                     });
                                     Timer(Duration(milliseconds: 1500), () {
                                       if (resetPolicy == false) {
-                                        resetResults = false;
-                                        if (currUser == currentLeader) {
-                                          game.updateGameQuestLock(
-                                              lock: selected);
-                                        }
                                         Navigator.of(context).pop();
                                         createPolicyDialog(context, team);
                                         resetPolicy = true;
@@ -1072,17 +1160,16 @@ class _roundTableState extends State<roundTable> {
                                     if (['pass', 'fail']
                                             .contains(prevAnimation) ==
                                         false) {
+                                      if (currUser == currentLeader) {
+                                        game.updateGameQuestLock(
+                                            lock: selected);
+                                      }
                                       game.updateGamePolicyFail(rounds: rounds);
                                       state(() {
                                         prevAnimation = 'fail';
                                       });
                                       Timer(Duration(milliseconds: 1500), () {
                                         if (resetPolicy == false) {
-                                          resetResults = false;
-                                          if (currUser == currentLeader) {
-                                            game.updateGameQuestLock(
-                                                lock: selected);
-                                          }
                                           Navigator.of(context).pop();
                                           createPolicyDialog(context, team);
                                           resetPolicy = true;
@@ -1166,6 +1253,7 @@ class _roundTableState extends State<roundTable> {
                                 if (['star', 'cancel']
                                         .contains(prevAnimation) ==
                                     false) {
+                                  resetResults = false;
                                   game.updateGameQuestAye(
                                     rounds: rounds,
                                     currUser: currUser,
@@ -1192,9 +1280,9 @@ class _roundTableState extends State<roundTable> {
                                   if (['star', 'cancel']
                                           .contains(prevAnimation) ==
                                       false) {
+                                    resetResults = false;
                                     game.updateGameQuestNay(
                                         rounds: rounds, currUser: currUser);
-
                                     state(() {
                                       prevAnimation = 'cancel';
                                     });
@@ -1216,7 +1304,6 @@ class _roundTableState extends State<roundTable> {
 
   // Watch out for double entry of bottom sheet in some cases
   Future<void> _showCounterPanel(Teams team) {
-    reset = false;
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -1236,19 +1323,18 @@ class _roundTableState extends State<roundTable> {
                   value: game.groups,
                   child:
                       Consumer<Groups>(builder: (context, Groups group, child) {
-                    print(group.ayeCount);
-                    print(group.nayCount);
                     if (group.ayeCount + group.nayCount == player_list.length &&
                         group.nayCount >= group.ayeCount) {
                       Timer(Duration(seconds: 3), () {
+                        resetStatus();
                         if (reset == false) {
+                          Navigator.of(context).pop();
                           if (currUser == currentLeader) {
                             game.updateGameQuest();
                             game.updateVoteTracker(
                                 rounds: 'Round' + roundPass.toString());
                             game.updateGamePolicy();
                           }
-                          Navigator.of(context).pop();
                           reset = true;
                         }
                       });
@@ -1266,6 +1352,10 @@ class _roundTableState extends State<roundTable> {
                         });
                       } else {
                         Timer(Duration(seconds: 3), () {
+                          if (currUser == currentLeader) {
+                            game.updateGameQuestLock(lock: selected);
+                            game.updateGamePolicy();
+                          }
                           if (reset == false) {
                             Navigator.of(context).pop();
                             createPolicyDialog(context, team);
@@ -1291,33 +1381,252 @@ class _roundTableState extends State<roundTable> {
         });
   }
 
+  List<Widget> getMerlinsChoice(StateSetter merlinState) {
+    List<Widget> merlinsChoice = [];
+    List<Widget> players = [];
+    merlinsChoice.addAll([
+      Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Container(
+          alignment: Alignment.topCenter,
+          height: 8,
+          width: 50,
+          decoration: BoxDecoration(
+            color: Colors.grey[400],
+            borderRadius: BorderRadius.all(Radius.circular(50)),
+          ),
+        ),
+      ),
+      SizedBox(height: 5),
+      Text(
+        'Identify Merlin',
+        style: TextStyle(
+            color: Colors.grey[400],
+            fontFamily: 'cut',
+            fontSize: 25,
+            fontWeight: FontWeight.normal,
+            decoration: TextDecoration.none),
+      ),
+      SizedBox(height: 20),
+    ]);
+    int buttonLength =
+        (users.length % 2 == 0 ? users.length : users.length - 1);
+    for (int i = 0; i < buttonLength; i += 2) {
+      players.add(Row(
+        children: [
+          SizedBox(width: 24.5.w),
+          RaisedButton(
+            padding: EdgeInsets.all(8),
+            color: merlinChoice == i
+                ? Color.fromRGBO(255, 220, 128, 1)
+                : Colors.white,
+            shape: StadiumBorder(
+              //borderRadius: BorderRadius.circular(18.0),
+              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+            ),
+            onPressed: () async {
+              merlinState(() {
+                merlinChoice = i;
+              });
+              if (roleList[i] == 'Merlin') {
+                game.updateGameQuestWinner(winner: 'evil');
+              } else {
+                game.updateGameQuestWinner(winner: 'good');
+              }
+            },
+            child: Text(users[i],
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 12.0.sp,
+                    fontFamily: 'hash')),
+          ),
+          SizedBox(
+            width: 8.0.w,
+          ),
+          RaisedButton(
+            padding: EdgeInsets.all(8),
+            color: merlinChoice == i + 1
+                ? Color.fromRGBO(255, 220, 128, 1)
+                : Colors.white,
+            shape: StadiumBorder(
+              //borderRadius: BorderRadius.circular(18.0),
+              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+            ),
+            onPressed: () async {
+              merlinState(() {
+                merlinChoice = i + 1;
+              });
+              if (roleList[i + 1] == 'Merlin') {
+                game.updateGameQuestWinner(winner: 'evil');
+              } else {
+                game.updateGameQuestWinner(winner: 'good');
+              }
+            },
+            child: Text(users[i + 1],
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 12.0.sp,
+                    fontFamily: 'hash')),
+          ),
+        ],
+      ));
+    }
+    if (buttonLength == users.length - 1) {
+      players.addAll([
+        Row(children: [
+          SizedBox(width: 24.5.w),
+          RaisedButton(
+            padding: EdgeInsets.all(8),
+            color: merlinChoice == buttonLength
+                ? Color.fromRGBO(255, 220, 128, 1)
+                : Colors.white,
+            shape: StadiumBorder(
+              //borderRadius: BorderRadius.circular(18.0),
+              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+            ),
+            onPressed: () async {
+              merlinState(() {
+                merlinChoice = buttonLength;
+              });
+              if (roleList[buttonLength] == 'Merlin') {
+                game.updateGameQuestWinner(winner: 'evil');
+              } else {
+                game.updateGameQuestWinner(winner: 'good');
+              }
+            },
+            child: Text(users[buttonLength],
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 12.0.sp,
+                    fontFamily: 'hash')),
+          ),
+        ])
+      ]);
+    }
+
+    merlinsChoice.addAll(players);
+    return merlinsChoice;
+  }
+
+  void showMerlinPanel() {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(30),
+          ),
+        ),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        builder: (context) {
+          return WillPopScope(
+              onWillPop: () {},
+              child: StatefulBuilder(
+                  builder: (BuildContext context, StateSetter merlinState) {
+                return Container(
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(30.0),
+                        topRight: const Radius.circular(30.0),
+                      ),
+                    ),
+                    child: Column(children: getMerlinsChoice(merlinState)));
+              }));
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     // temporary code
     return StreamProvider.value(
-        initialData: Teams(teams: []),
+        initialData: Teams(locked: null, teams: [], winner: ''),
         value: game.teams,
         child: Consumer<Teams>(builder: (context, Teams team, child) {
+          print('Locked: ' + team.locked.toString());
+          print('SELECTED: ' + selected.toString());
+          print('Team: ' + team.teams.toString());
+          print('WINNER:' + team.winner);
           if (team.locked == true) {
             prevAnimation = 'activate';
             if (currUser != currentLeader) {
               selected = !selected;
             }
+            reset = false;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _showVotePanel(team);
             });
           }
           if (team.locked == false && selected == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() {
-                selected = !selected;
-                leaderIndex = (leaderIndex + 1) % player_list.length;
-                reset = false;
-                currentLeader = player_list[leaderIndex];
-                votePass += 1;
+              if (votePass == 5 && endGame == false) {
+                Timer(Duration(milliseconds: 2500), () {
+                  endGame = true;
+                  bool victory = charTeams[role] == 1;
+                  Navigator.of(context).push(PageRouteBuilder(
+                      pageBuilder: (context, animation, _) {
+                        return SecondScreen(
+                          victory: victory,
+                        );
+                      },
+                      opaque: false));
+                });
+              } else {
+                setState(() {
+                  selected = !selected;
+                  leaderIndex = (leaderIndex + 1) % player_list.length;
+                  currentLeader = player_list[leaderIndex];
+                  votePass += 1;
+                });
+              }
+            });
+          }
+
+          if (team.winner != '' && endGame == false) {
+            endGame = true;
+            bool victory = charTeams[role] == sides[team.winner];
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).push(PageRouteBuilder(
+                  pageBuilder: (context, animation, _) {
+                    return SecondScreen(
+                      victory: victory,
+                    );
+                  },
+                  opaque: false));
+            });
+          }
+
+          if (goodScore == 3 && merlinVote == false) {
+            merlinVote = true;
+            if (role == 'Modred') {
+              Timer(Duration(milliseconds: 2000), () {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  showMerlinPanel();
+                });
+              });
+            } else {
+              lockGame = true;
+            }
+          }
+
+          if (evilScore == 3 && endGame == false) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Timer(Duration(milliseconds: 2500), () {
+                endGame = true;
+                bool victory = charTeams[role] == 1;
+                Navigator.of(context).push(PageRouteBuilder(
+                    pageBuilder: (context, animation, _) {
+                      return SecondScreen(
+                        victory: victory,
+                      );
+                    },
+                    opaque: false));
               });
             });
           }
+
           return SafeArea(
             child: LocalHeroScope(
               duration: const Duration(milliseconds: 300),
@@ -1390,7 +1699,8 @@ class _roundTableState extends State<roundTable> {
                                           roundTrack[player_list.length][0]
                                               .toString(),
                                           1,
-                                          'quest'),
+                                          'quest',
+                                          false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
@@ -1398,7 +1708,8 @@ class _roundTableState extends State<roundTable> {
                                           roundTrack[player_list.length][1]
                                               .toString(),
                                           2,
-                                          'quest'),
+                                          'quest',
+                                          false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
@@ -1406,15 +1717,24 @@ class _roundTableState extends State<roundTable> {
                                           roundTrack[player_list.length][2]
                                               .toString(),
                                           3,
-                                          'quest'),
+                                          'quest',
+                                          false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
-                                      gameCounts(
-                                          roundTrack[player_list.length][3]
-                                              .toString(),
-                                          4,
-                                          'quest'),
+                                      users.length > 1
+                                          ? gameCounts(
+                                              roundTrack[player_list.length][3]
+                                                  .toString(),
+                                              4,
+                                              'quest',
+                                              true)
+                                          : gameCounts(
+                                              roundTrack[player_list.length][3]
+                                                  .toString(),
+                                              4,
+                                              'quest',
+                                              false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
@@ -1422,7 +1742,8 @@ class _roundTableState extends State<roundTable> {
                                           roundTrack[player_list.length][4]
                                               .toString(),
                                           5,
-                                          'quest')
+                                          'quest',
+                                          false)
                                     ],
                                   ),
                                   SizedBox(
@@ -1442,23 +1763,23 @@ class _roundTableState extends State<roundTable> {
                                               decoration: TextDecoration.none),
                                         ),
                                       ),
-                                      gameCounts('1', 1, 'vote'),
+                                      gameCounts('1', 1, 'vote', false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
-                                      gameCounts('2', 2, 'vote'),
+                                      gameCounts('2', 2, 'vote', false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
-                                      gameCounts('3', 3, 'vote'),
+                                      gameCounts('3', 3, 'vote', false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
-                                      gameCounts('4', 4, 'vote'),
+                                      gameCounts('4', 4, 'vote', false),
                                       SizedBox(
                                         width: 1.5.w,
                                       ),
-                                      gameCounts('5', 5, 'vote')
+                                      gameCounts('5', 5, 'vote', false)
                                     ],
                                   ),
                                 ],

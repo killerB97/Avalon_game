@@ -221,6 +221,7 @@ class _roleSelectionState extends State<roleSelection> {
                                       head,
                                       player_list,
                                       userList,
+                                      characterList,
                                       player_no.toString(),
                                       game)),
                             );
