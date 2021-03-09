@@ -27,8 +27,11 @@ class DatabaseService {
 
   // Disconnect from a game
   void disconnectFromGame() {
-    gamesCollection = null;
-    game_key = null;
+    gamesCollection.get().then((snapshot) {
+      for (DocumentSnapshot doc in snapshot.docs) {
+        doc.reference.delete();
+      }
+    });
   }
 
   // Add a player to the game
@@ -41,10 +44,16 @@ class DatabaseService {
 
 // Update Game Settings
   Future<void> updateGameSettings(
-      {bool locked = false, bool start = false, int numPlayers = 0}) async {
-    return await gameSettings
-        .doc(game_key)
-        .set({'locked': locked, 'start': start, 'no_player': numPlayers});
+      {bool locked = false,
+      bool start = false,
+      int numPlayers = 0,
+      int seed = 0}) async {
+    return await gameSettings.doc(game_key).set({
+      'locked': locked,
+      'start': start,
+      'no_player': numPlayers,
+      'seed': seed
+    });
   }
 
 // Update Game Settings
@@ -144,6 +153,34 @@ class DatabaseService {
         doc.reference.delete();
       }
     });
+    gameSettings.get().then((snapshot) {
+      for (DocumentSnapshot doc in snapshot.docs) {
+        if (doc.id == game_key) {
+          doc.reference.delete();
+        }
+      }
+    });
+    gameQuest.get().then((snapshot) {
+      for (DocumentSnapshot doc in snapshot.docs) {
+        if (doc.id == game_key) {
+          doc.reference.delete();
+        }
+      }
+    });
+    voteTrack.get().then((snapshot) {
+      for (DocumentSnapshot doc in snapshot.docs) {
+        if (doc.id == game_key) {
+          doc.reference.delete();
+        }
+      }
+    });
+    gamePolicy.get().then((snapshot) {
+      for (DocumentSnapshot doc in snapshot.docs) {
+        if (doc.id == game_key) {
+          doc.reference.delete();
+        }
+      }
+    });
   }
 
   void deleteDocument(int player_no) {
@@ -184,7 +221,8 @@ class DatabaseService {
     return gameSetting(
         locked: snapshot.data()['locked'] ?? false,
         start: snapshot.data()['start'] ?? false,
-        no_player: snapshot.data()['no_player'] ?? 0);
+        no_player: snapshot.data()['no_player'] ?? 0,
+        seed: snapshot.data()['seed'] ?? 0);
   }
 
   // Map list of PLayer object to a List
@@ -218,6 +256,17 @@ class DatabaseService {
     } else {
       return true;
     }
+  }
+
+  Future<bool> checkSettings() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('Game Settings').get();
+    for (QueryDocumentSnapshot doc in snapshot.docs) {
+      if (doc.id == game_key) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Check for existing Username

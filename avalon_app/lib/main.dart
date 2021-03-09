@@ -8,16 +8,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'services/database.dart';
 import 'player_list.dart';
+import 'dart:math';
 import 'package:avalonapp/models/player.dart';
+import 'package:quiver/iterables.dart';
 import 'package:get/get.dart';
 import 'package:english_words/english_words.dart';
 import 'package:sizer/sizer.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:splashscreen/splashscreen.dart';
 import 'screens/role_select.dart';
-import 'screens/round_table.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:avalonapp/models/settings.dart';
 import 'package:avalonapp/screens/winner.dart';
 import 'dart:async';
@@ -442,8 +441,14 @@ class _RoomState extends State<Room> {
     if (oper == 'add') {
       updateState(() {
         errorText = '';
-        _characterNo[index] =
-            (int.tryParse(_characterNo[index]) + 1).toString();
+        print('Index:' + index.toString());
+        if (index <= 3 && _characterNo[index] == '1') {
+          errorText =
+              'You can pick atmost 1 of Merlin, Morded, Percival and Morgana';
+        } else {
+          _characterNo[index] =
+              (int.tryParse(_characterNo[index]) + 1).toString();
+        }
       });
     } else {
       updateState(() {
@@ -457,7 +462,16 @@ class _RoomState extends State<Room> {
   }
 
   Future<void> errorCheck(StateSetter updateState, int numPlayers) async {
-    if ((victCount + vicsCount) != numPlayers) {
+    if (int.parse(_characterNo[2]) + int.parse(_characterNo[3]) == 1) {
+      updateState(() {
+        errorText =
+            'If Percival is selected, Morgana must be selected and vice versa';
+      });
+    } else if (int.parse(_characterNo[0]) + int.parse(_characterNo[1]) != 2) {
+      updateState(() {
+        errorText = 'Merlin and Mordred are mandatory selections';
+      });
+    } else if ((victCount + vicsCount) != numPlayers) {
       updateState(() {
         errorText =
             'The number of players playing and characters selected must be equal';
@@ -788,10 +802,12 @@ class _RoomState extends State<Room> {
                           errorCheck(state, numPlayers);
                           if (errorText == '') {
                             playerRoles = await game.allocateRole(_rolesList);
+                            int seed = Random().nextInt(numPlayers);
                             game.updateGameSettings(
                                 start: true,
                                 locked: true,
-                                numPlayers: numPlayers);
+                                numPlayers: numPlayers,
+                                seed: seed);
                             Navigator.push(
                               context,
                               RevealRoute(
@@ -802,7 +818,8 @@ class _RoomState extends State<Room> {
                                     setting,
                                     head,
                                     player_no,
-                                    playerRoles.player_list),
+                                    playerRoles.player_list,
+                                    seed),
                                 maxRadius: size.height * 1.17,
                                 centerAlignment: Alignment.bottomCenter,
                               ),
@@ -856,14 +873,14 @@ class _RoomState extends State<Room> {
                   mode == 'host'
                       ? game.deleteCollection()
                       : game.deleteDocument(player_no);
-                  Navigator.push(
-                    context,
-                    RevealRoute(
-                      page: Avalon(),
-                      maxRadius: size.height * 1.17,
-                      centerAlignment: Alignment.bottomRight,
-                    ),
-                  );
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      RevealRoute(
+                        page: Avalon(),
+                        maxRadius: size.height * 1.17,
+                        centerAlignment: Alignment.bottomCenter,
+                      ),
+                      ModalRoute.withName('/'));
                 },
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
@@ -886,13 +903,14 @@ class _RoomState extends State<Room> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return StreamProvider.value(
-      initialData: gameSetting(locked: false, start: false, no_player: 0),
+      initialData:
+          gameSetting(locked: false, start: false, no_player: 0, seed: 0),
       value: game.settings,
       child:
           Consumer<gameSetting>(builder: (context, gameSetting setting, child) {
         if (setting.start == true && head == 'join') {
-          return Loading(
-              size, _rolesList, game, setting, head, player_no, player_list);
+          return Loading(size, _rolesList, game, setting, head, player_no,
+              player_list, setting.seed);
         } else {
           return StreamProvider<List<Player>>.value(
             initialData: [Player(player_no: 0, username: 'default')],
@@ -902,14 +920,14 @@ class _RoomState extends State<Room> {
               if (player.length == 0 && exit == false) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   exit = true;
-                  Navigator.pushReplacement(
-                    context,
-                    RevealRoute(
-                      page: Avalon(),
-                      maxRadius: size.height * 1.17,
-                      centerAlignment: Alignment.bottomCenter,
-                    ),
-                  );
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      RevealRoute(
+                        page: Avalon(),
+                        maxRadius: size.height * 1.17,
+                        centerAlignment: Alignment.bottomCenter,
+                      ),
+                      ModalRoute.withName('/'));
                   // executes after build
                 });
                 return Container();
@@ -1056,12 +1074,13 @@ class Loading extends StatefulWidget {
   String head;
   int player_no;
   List<String> player_list;
+  int seed;
 
   Loading(this.size, this.roleSelect, this.game, this.setting, this.head,
-      this.player_no, this.player_list);
+      this.player_no, this.player_list, this.seed);
   @override
   _LoadingState createState() => _LoadingState(
-      size, roleSelect, game, setting, head, player_no, player_list);
+      size, roleSelect, game, setting, head, player_no, player_list, seed);
 }
 
 class _LoadingState extends State<Loading> {
@@ -1071,9 +1090,28 @@ class _LoadingState extends State<Loading> {
   gameSetting setting;
   String head;
   int player_no;
+  int seed;
+  List<String> shuffled_player_list = [];
+  List<String> shuffled_roleSelect = [];
   List<String> player_list;
   _LoadingState(this.size, this.roleSelect, this.game, this.setting, this.head,
-      this.player_no, this.player_list);
+      this.player_no, this.player_list, this.seed);
+
+  void shufflePlayerOrder(int seed) {
+    int rotate = 0;
+    for (int i = 0; i < player_list.length; i++) {
+      rotate = (rotate + seed) % player_list.length;
+      shuffled_player_list.add(player_list[rotate]);
+      shuffled_roleSelect.add(roleSelect[rotate]);
+    }
+    print('seed ' + seed.toString());
+    print('JAGGER');
+    print(player_list);
+    print(roleSelect);
+    print('MAC');
+    print(shuffled_player_list);
+    print(shuffled_roleSelect);
+  }
 
   void setRolesList(gameSetting setting) async {
     int docid = 1;
@@ -1085,6 +1123,12 @@ class _LoadingState extends State<Loading> {
       }
       docid++;
     }
+    if (seed == 0) {
+      shuffled_player_list = player_list;
+      shuffled_roleSelect = roleSelect;
+    } else {
+      shufflePlayerOrder(seed);
+    }
   }
 
   startTime() async {
@@ -1092,6 +1136,7 @@ class _LoadingState extends State<Loading> {
       setRolesList(setting);
     }
     if (head == 'host') {
+      shufflePlayerOrder(seed);
       game.updateGameQuest();
       game.voteTracker(rounds: 'Round1');
       game.updateGamePolicy();
@@ -1106,17 +1151,15 @@ class _LoadingState extends State<Loading> {
   }
 
   route() {
-    print('PAPADAM');
-    print(roleSelect);
-    print(player_list);
-    Navigator.push(
-      context,
-      RevealRoute(
-        page: roleSelection(roleSelect, player_no, player_list, game, head),
-        maxRadius: size.height * 1.46,
-        centerAlignment: Alignment.centerRight,
-      ),
-    );
+    Navigator.pushAndRemoveUntil(
+        context,
+        RevealRoute(
+          page: roleSelection(
+              shuffled_roleSelect, player_no, shuffled_player_list, game, head),
+          maxRadius: size.height * 1.46,
+          centerAlignment: Alignment.centerRight,
+        ),
+        ModalRoute.withName('/'));
   }
 
   @override

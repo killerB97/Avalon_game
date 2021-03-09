@@ -45,6 +45,7 @@ dependencies:
   fab_circular_menu: ^1.0.1
   material_design_icons_flutter: ^4.0.5855
   concentric_transition: ^0.1.1
+  quiver: ^2.1.5
   flutter:
     sdk: flutter
 
@@ -199,6 +200,10 @@ flutter:
     - family: am
       fonts:
         - asset: fonts/am.ttf
+
+    - family: bondi
+      fonts:
+        - asset: fonts/bondi.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages

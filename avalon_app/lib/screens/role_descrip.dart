@@ -126,7 +126,7 @@ class roleDescription extends StatelessWidget {
                   Navigator.push(
                     context,
                     RevealRoute(
-                      page: roundTable(player_list, 'host', users, player_no,
+                      page: roundTable(player_list, head, users, player_no,
                           game, roleName, roleList),
                       maxRadius: size.height * 1.17,
                       centerAlignment: Alignment.bottomRight,

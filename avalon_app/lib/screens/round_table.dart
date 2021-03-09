@@ -316,8 +316,6 @@ class _roundTableState extends State<roundTable> {
                     value: game.policy,
                     child:
                         Consumer<Policy>(builder: (context, Policy pol, child) {
-                      print('PassCount: ' + pol.passCount.toString());
-                      print('FailCount: ' + pol.failCount.toString());
                       if (pol.passCount + pol.failCount == team.teams.length &&
                           stopPolicyState == false) {
                         horse = 'success';
@@ -333,10 +331,8 @@ class _roundTableState extends State<roundTable> {
                                     2500 * (pol.passCount + pol.failCount))),
                             () {
                           if (resetResults == false) {
-                            print('I have Entered Correctly');
                             roundPass += 1;
                             votePass = 1;
-                            print('Leader Index: ' + leaderIndex.toString());
                             leaderIndex =
                                 (leaderIndex + 1) % player_list.length;
                             rounds = 'Round' + roundPass.toString();
@@ -354,17 +350,13 @@ class _roundTableState extends State<roundTable> {
                                   rounds: 'Round' + roundPass.toString());
                               game.updateGamePolicy();
                               currentLeader = player_list[leaderIndex];
-                              print('Current Leader: ' + currentLeader);
                             } else {
                               setState(() {
                                 currentLeader = player_list[leaderIndex];
-                                print('Current Leader: ' + currentLeader);
                               });
                             }
                             Navigator.of(context).pop();
                             setState(() {
-                              print(CharStatus);
-                              print(questSlotStatus);
                               roundStatus[roundPass - 1] = users.length < 7
                                   ? pol.failCount >= 1
                                       ? 'fail'
@@ -437,7 +429,7 @@ class _roundTableState extends State<roundTable> {
 
   Widget circleChar(String player_no, int teamStrength, Teams teams) {
     return Positioned(
-      top: player_no == currentLeader
+      top: player_list[int.parse(player_no) - 1] == currentLeader
           ? teams.teams.contains(player_list[int.parse(player_no) - 1])
               ? movedLocation['loc' +
                       (teams.teams.indexOf(
@@ -452,7 +444,7 @@ class _roundTableState extends State<roundTable> {
                           1)
                       .toString()][0]
               : initialLocation[player_no][0],
-      right: player_no == currentLeader
+      right: player_list[int.parse(player_no) - 1] == currentLeader
           ? teams.teams.contains(player_list[int.parse(player_no) - 1])
               ? movedLocation['loc' +
                       (teams.teams.indexOf(
@@ -483,8 +475,6 @@ class _roundTableState extends State<roundTable> {
                   } else {
                     callback('sub_lock');
                   }
-                  print('I am removing: ' +
-                      player_list[int.parse(player_no) - 1]);
                   questTeams.remove(player_list[int.parse(player_no) - 1]);
                   game.updateGameQuest(teams: questTeams);
                   setState(() {
@@ -503,8 +493,6 @@ class _roundTableState extends State<roundTable> {
                       break;
                     } else {
                       callback('add_lock');
-                      print('I am adding: ' +
-                          player_list[int.parse(player_no) - 1]);
                       questTeams.add(player_list[int.parse(player_no) - 1]);
                       game.updateGameQuest(teams: questTeams);
                       setState(() {
@@ -518,7 +506,7 @@ class _roundTableState extends State<roundTable> {
               }
             }
           },
-          child: currentLeader == player_no
+          child: currentLeader == player_list[int.parse(player_no) - 1]
               ? Stack(children: [
                   Container(
                     height: 2.83 * 7.3.w,
@@ -537,9 +525,10 @@ class _roundTableState extends State<roundTable> {
                 ])
               : CircleAvatar(
                   radius: 7.3.w,
-                  backgroundColor: currentLeader != player_no
-                      ? Colors.grey[100]
-                      : Color.fromRGBO(255, 220, 128, 1),
+                  backgroundColor:
+                      currentLeader != player_list[int.parse(player_no) - 1]
+                          ? Colors.grey[100]
+                          : Color.fromRGBO(255, 220, 128, 1),
                   child: CircleAvatar(
                     radius: 6.08.w,
                     backgroundImage:
@@ -600,7 +589,7 @@ class _roundTableState extends State<roundTable> {
                               Text(numb,
                                   style: TextStyle(
                                       fontFamily: 'hash',
-                                      fontSize: 12.0.sp,
+                                      fontSize: 11.0.sp,
                                       color:
                                           (votePass == sel || roundPass == sel)
                                               ? Color(0xff111111)
@@ -1545,10 +1534,6 @@ class _roundTableState extends State<roundTable> {
         initialData: Teams(locked: null, teams: [], winner: ''),
         value: game.teams,
         child: Consumer<Teams>(builder: (context, Teams team, child) {
-          print('Locked: ' + team.locked.toString());
-          print('SELECTED: ' + selected.toString());
-          print('Team: ' + team.teams.toString());
-          print('WINNER:' + team.winner);
           if (team.locked == true) {
             prevAnimation = 'activate';
             if (currUser != currentLeader) {
@@ -1568,8 +1553,13 @@ class _roundTableState extends State<roundTable> {
                   Navigator.of(context).push(PageRouteBuilder(
                       pageBuilder: (context, animation, _) {
                         return SecondScreen(
-                          victory: victory,
-                        );
+                            victory: victory,
+                            evilScore: evilScore,
+                            goodScore: goodScore,
+                            winPath: 2,
+                            game: game,
+                            head: head,
+                            username: users[player_list.indexOf(currUser)]);
                       },
                       opaque: false));
                 });
@@ -1591,8 +1581,13 @@ class _roundTableState extends State<roundTable> {
               Navigator.of(context).push(PageRouteBuilder(
                   pageBuilder: (context, animation, _) {
                     return SecondScreen(
-                      victory: victory,
-                    );
+                        victory: victory,
+                        evilScore: evilScore,
+                        goodScore: goodScore,
+                        winPath: team.winner == 'evil' ? 3 : 1,
+                        game: game,
+                        head: head,
+                        username: users[player_list.indexOf(currUser)]);
                   },
                   opaque: false));
             });
@@ -1611,7 +1606,8 @@ class _roundTableState extends State<roundTable> {
             }
           }
 
-          if (evilScore == 3 && endGame == false) {
+          if (evilScore == 1 && endGame == false) {
+            game.disconnectFromGame();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Timer(Duration(milliseconds: 2500), () {
                 endGame = true;
@@ -1619,8 +1615,13 @@ class _roundTableState extends State<roundTable> {
                 Navigator.of(context).push(PageRouteBuilder(
                     pageBuilder: (context, animation, _) {
                       return SecondScreen(
-                        victory: victory,
-                      );
+                          victory: victory,
+                          evilScore: evilScore,
+                          goodScore: goodScore,
+                          winPath: 1,
+                          game: game,
+                          head: head,
+                          username: users[player_list.indexOf(currUser)]);
                     },
                     opaque: false));
               });
