@@ -3,6 +3,7 @@ import 'package:avalonapp/services/database.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:quiver/collection.dart';
 import 'package:sizer/sizer.dart';
 import 'package:avalonapp/models/player.dart';
 import 'package:avalonapp/screens/role_descrip.dart';
@@ -50,20 +51,30 @@ class _roleSelectionState extends State<roleSelection> {
   };
 
   Map descText = {
-    'Percival':
-        'You are Percival.\n\nMorgana fogs your vision from identifying Merlin. Choose wisely between {0} {1}',
-    'Mordred':
-        'You are Mordred.\n\nHidden from the eyes of the Virtuous. You unleash evil with your minions {0} {1}. Identity of Oberon is hidden from you',
-    'Merlin':
-        'You are Merlin.\n\nYou are instrumental in driving the forces of evil out. You have identified {0} {1} to be the forces of evil. But their overlord Mordred is hidden from you',
-    'Morgana':
-        'You are Morgana.\n\nYou confuse Percival and bring glory to Mordred. You unleash evil with your minions {0} {1}. Identity of Oberon is hidden from you',
-    'Oberon':
-        'You are Oberon.\n\n You are the wild card that confuses the Virtuous and the Vicious',
-    'Minion':
-        'You are a Minion.\n\nUnleash evil with {0} {1}. Oberon is hidden from you',
-    'Loyal Knight':
-        'You are a Loyal Knight.\n\nFaithful to King Arthur in his quest to root out all evil'
+    'Percival': [
+      'You are Percival.\n\nMorgana fogs your vision from identifying Merlin. Choose wisely between '
+    ],
+    'Mordred': [
+      'You are Mordred.\n\nHidden from the eyes of the Virtuous. You unleash evil with your minions ',
+      ' Identity of Oberon is hidden from you'
+    ],
+    'Merlin': [
+      'You are Merlin.\n\nYou are instrumental in driving the forces of evil out. You have identified ',
+      ' to be the forces of evil. But their overlord Mordred is hidden from you'
+    ],
+    'Morgana': [
+      'You are Morgana.\n\nYou confuse Percival and bring glory to Mordred. You unleash evil with your minions. ',
+      ' Identity of Oberon is hidden from you'
+    ],
+    'Oberon': [
+      'You are Oberon.\n\n You are the wild card that confuses the Virtuous and the Vicious'
+    ],
+    'Minion': [
+      'You are a Minion.\n\nUnleash evil with ' '. Oberon is hidden from you'
+    ],
+    'Loyal Knight': [
+      'You are a Loyal Knight.\n\nFaithful to King Arthur in his quest to root out all evil'
+    ]
   };
 
   Map<String, List<String>> charDependency = {
@@ -94,26 +105,111 @@ class _roleSelectionState extends State<roleSelection> {
     }
   }
 
-  String generateDescription(String desc, List<String> depend) {
+  Widget generateDescription(List<String> desc, List<String> depend) {
     if (depend.length > 0) {
       Map<String, dynamic> format = {'0': '', '1': ''};
+      Widget finalDesc;
       var inter = Interpolation();
+      List<TextSpan> parts = [];
       if (depend.length == 1) {
         depend =
             depend.map((x) => x[0].toUpperCase() + x.substring(1)).toList();
-        format['0'] = depend.last;
-        format['1'] = '';
+        parts.add(TextSpan(
+            text: desc[0],
+            style: TextStyle(
+                color: Colors.grey[800],
+                fontFamily: 'bread',
+                fontSize: 22.0.sp,
+                decoration: TextDecoration.none,
+                fontWeight: FontWeight.normal)));
+        parts.add(TextSpan(
+            text: depend.last,
+            style: TextStyle(
+                color: color[
+                    characterList[player_list.indexOf(player_no.toString())]],
+                fontFamily: 'bread',
+                fontSize: 22.0.sp,
+                decoration: TextDecoration.none,
+                fontWeight: FontWeight.normal)));
+        desc.length > 1
+            ? parts.add(TextSpan(
+                text: desc[1],
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontFamily: 'bread',
+                    fontSize: 22.0.sp,
+                    decoration: TextDecoration.none,
+                    fontWeight: FontWeight.normal)))
+            : print('');
+        finalDesc = RichText(text: TextSpan(children: parts));
       } else {
         depend =
             depend.map((x) => x[0].toUpperCase() + x.substring(1)).toList();
-        format['0'] = depend.sublist(0, depend.length - 1).join(', ');
-        format['1'] = 'and ' + depend.last;
+        parts.add(TextSpan(
+            text: desc[0],
+            style: TextStyle(
+                color: Colors.grey[800],
+                fontFamily: 'bread',
+                fontSize: 22.0.sp,
+                decoration: TextDecoration.none,
+                fontWeight: FontWeight.normal)));
+        for (int i = 0; i < depend.length - 1; i++) {
+          parts.add(TextSpan(
+              text: depend[i],
+              style: TextStyle(
+                  color: color[
+                      characterList[player_list.indexOf(player_no.toString())]],
+                  fontFamily: 'bread',
+                  fontSize: 22.0.sp,
+                  decoration: TextDecoration.none,
+                  fontWeight: FontWeight.normal)));
+          parts.add(TextSpan(
+              text: ',',
+              style: TextStyle(
+                  color: Colors.grey[800],
+                  fontFamily: 'bread',
+                  fontSize: 22.0.sp,
+                  decoration: TextDecoration.none,
+                  fontWeight: FontWeight.normal)));
+        }
+        parts.add(TextSpan(
+            text: ' and ',
+            style: TextStyle(
+                color: Colors.grey[800],
+                fontFamily: 'bread',
+                fontSize: 22.0.sp,
+                decoration: TextDecoration.none,
+                fontWeight: FontWeight.normal)));
+        parts.add(TextSpan(
+            text: depend.last,
+            style: TextStyle(
+                color: color[
+                    characterList[player_list.indexOf(player_no.toString())]],
+                fontFamily: 'bread',
+                fontSize: 22.0.sp,
+                decoration: TextDecoration.none,
+                fontWeight: FontWeight.normal)));
+        desc.length > 1
+            ? parts.add(TextSpan(
+                text: desc[1],
+                style: TextStyle(
+                    color: Colors.grey[800],
+                    fontFamily: 'bread',
+                    fontSize: 22.0.sp,
+                    decoration: TextDecoration.none,
+                    fontWeight: FontWeight.normal)))
+            : print('');
+        finalDesc = RichText(text: TextSpan(children: parts));
       }
-      print(format);
-      String newDesc = inter.eval(desc, format);
-      return newDesc;
+      return finalDesc;
     } else {
-      return desc;
+      return Text(desc[0],
+          style: TextStyle(
+              color: Colors.grey[800],
+              fontFamily: 'bread',
+              fontSize: 22.0.sp,
+              decoration: TextDecoration.none,
+              fontWeight: FontWeight.normal));
     }
   }
 
@@ -127,11 +223,12 @@ class _roleSelectionState extends State<roleSelection> {
           backgroundColor: Colors.transparent,
           body: Container(
             decoration: BoxDecoration(
-                image: DecorationImage(
+                /*image: DecorationImage(
                     colorFilter: new ColorFilter.mode(
                         Colors.white.withOpacity(0.8), BlendMode.lighten),
                     image: AssetImage("images/game_bg.jpeg"),
-                    fit: BoxFit.fitHeight)),
+                    fit: BoxFit.fitHeight)*/
+                color: Color(0xff1e1e1e)),
           )),
       Column(
         children: [
@@ -145,7 +242,7 @@ class _roleSelectionState extends State<roleSelection> {
                         blurRadius: 0,
                         offset: Offset(0.0, 0.0)),
                   ],
-                  color: Colors.yellow[300],
+                  color: Color(0xffffc68a), //Colors.yellow[300],
                   borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(50.0),
                       bottomRight: Radius.circular(50.0))),
@@ -153,13 +250,13 @@ class _roleSelectionState extends State<roleSelection> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  SizedBox(width: 20.0.w),
+                  SizedBox(width: 15.5.w),
                   Text(
                     'Select Character',
                     style: TextStyle(
-                        fontSize: 18.2.sp,
-                        fontFamily: 'hash',
-                        color: Colors.grey[800],
+                        fontSize: 18.0.sp,
+                        fontFamily: 'bondi',
+                        color: Color(0xff1e1e1e), //Colors.grey[800],
                         decoration: TextDecoration.none),
                   ),
                 ],
@@ -197,7 +294,7 @@ class _roleSelectionState extends State<roleSelection> {
                                   characterMapping,
                                   userList,
                                   player_list);
-                          String description = generateDescription(
+                          Widget description = generateDescription(
                               descText[widget.characterList[widget.player_list
                                   .indexOf(widget.player_no.toString())]],
                               dependecyList);
@@ -230,21 +327,21 @@ class _roleSelectionState extends State<roleSelection> {
                         front: Container(
                             child: Card(
                           color: Colors.transparent,
-                          elevation: 0,
+                          elevation: 5,
                           child: Container(
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.grey,
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                      offset: Offset(1.0,
-                                          3.0), // shadow direction: bottom right
+                                      color: Color(0xffffc68a), //Colors.grey,
+                                      blurRadius: 0.0,
+                                      spreadRadius: 0.0,
+                                      offset: Offset(0.0,
+                                          0.0), // shadow direction: bottom right
                                     )
                                   ],
                                   image: DecorationImage(
-                                      image: AssetImage('images/trial2.jpg'),
+                                      image: AssetImage('images/cardbg1.jpg'),
                                       fit: BoxFit.cover,
                                       alignment: Alignment.topCenter))),
                         )),
@@ -262,11 +359,11 @@ class _roleSelectionState extends State<roleSelection> {
                                     borderRadius: BorderRadius.circular(10),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.grey,
-                                        blurRadius: 3.0,
-                                        spreadRadius: 2.0,
-                                        offset: Offset(1.0,
-                                            3.0), // shadow direction: bottom right
+                                        color: Color(0xffffc68a), //Colors.grey,
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                        offset: Offset(0.0,
+                                            0.0), // shadow direction: bottom right
                                       )
                                     ],
                                     image: DecorationImage(
@@ -290,3 +387,10 @@ class _roleSelectionState extends State<roleSelection> {
     ])));
   }
 }
+
+/*                                        color: Colors.grey,
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                        offset: Offset(1.0,
+                                            3.0), // shadow direction: bottom right
+                                      )*/

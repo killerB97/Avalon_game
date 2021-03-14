@@ -10,6 +10,7 @@ import 'services/database.dart';
 import 'player_list.dart';
 import 'dart:math';
 import 'package:avalonapp/models/player.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:quiver/iterables.dart';
 import 'package:get/get.dart';
 import 'package:english_words/english_words.dart';
@@ -75,7 +76,10 @@ class _AvalonState extends State<Avalon> {
             title: Center(
                 child: Text(
               "Game Setup",
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(
+                  color: Colors.grey[800],
+                  fontFamily: 'hash',
+                  fontSize: 25), //Colors.grey[700]),
             )),
             content: StatefulBuilder(
                 builder: (BuildContext context, StateSetter setState) {
@@ -113,13 +117,15 @@ class _AvalonState extends State<Avalon> {
                                       borderRadius:
                                           BorderRadius.circular(20.0)),
                                   enabledBorder: OutlineInputBorder(
-                                      borderSide:
-                                          BorderSide(color: Colors.yellow),
+                                      borderSide: BorderSide(
+                                          color: Color(
+                                              0xffffc68a)), //Colors.yellow),
                                       borderRadius:
                                           BorderRadius.circular(20.0)),
                                   focusedBorder: OutlineInputBorder(
-                                      borderSide:
-                                          BorderSide(color: Colors.yellow),
+                                      borderSide: BorderSide(
+                                          color: Color(
+                                              0xffffc68a)), //Colors.yellow),
                                       borderRadius:
                                           BorderRadius.circular(20.0))),
                               controller: gamekey,
@@ -164,17 +170,19 @@ class _AvalonState extends State<Avalon> {
                                 borderSide: BorderSide(color: Colors.red),
                                 borderRadius: BorderRadius.circular(20.0)),
                             enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.yellow),
+                                borderSide: BorderSide(
+                                    color: Color(0xffffc68a)), //Colors.yellow),
                                 borderRadius: BorderRadius.circular(20.0)),
                             focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.yellow),
+                                borderSide: BorderSide(
+                                    color: Color(0xffffc68a)), //Colors.yellow),
                                 borderRadius: BorderRadius.circular(20.0))),
                         controller: user,
                       ),
                       SizedBox(height: 3.46.h),
                       FlatButton(
                         padding: EdgeInsets.all(1.73.h),
-                        color: Colors.yellow,
+                        color: Color(0xffffc68a), //Colors.yellow,
                         shape: StadiumBorder(
                           //borderRadius: BorderRadius.circular(18.0),
                           side: BorderSide(color: Colors.white),
@@ -269,7 +277,7 @@ class _AvalonState extends State<Avalon> {
                         child: mode == 'host'
                             ? Text('Host',
                                 style: TextStyle(
-                                  color: Colors.grey[700],
+                                  color: Colors.grey[800], //Colors.grey[700],
                                   fontSize: 10.0.sp,
                                 ))
                             : Text('Join',
@@ -296,24 +304,24 @@ class _AvalonState extends State<Avalon> {
             body: Container(
               decoration: BoxDecoration(
                   image: DecorationImage(
-                      image: AssetImage("images/bg2.jpeg"), fit: BoxFit.cover)),
+                      image: AssetImage("images/bg6.png"), fit: BoxFit.cover)),
             )),
         Positioned(
-          top: 25.0.h,
-          left: 22.0.w,
+          top: 22.0.h,
+          left: 19.0.w,
           child: Text(
             'AVALON',
             style: TextStyle(
-                fontSize: 45.0.sp,
-                fontFamily: 'cut',
-                color: Colors.yellow,
+                fontSize: 55.0.sp,
+                fontFamily: 'bondi',
+                color: Color(0xffffc68a), //Colors.yellow,
                 decoration: TextDecoration.none,
                 fontWeight: FontWeight.normal),
           ),
         ),
         Positioned(
           top: 50.0.h,
-          left: 31.5.w,
+          left: 32.5.w,
           child: Column(
             children: [
               RaisedButton(
@@ -331,7 +339,7 @@ class _AvalonState extends State<Avalon> {
                 },
                 child: Text('Host Game',
                     style: TextStyle(
-                        color: Colors.yellow,
+                        color: Color(0xffffc68a), //Colors.yellow,
                         fontFamily: 'hash',
                         fontSize: 20.0.sp)),
                 shape: RoundedRectangleBorder(
@@ -347,7 +355,7 @@ class _AvalonState extends State<Avalon> {
                 },
                 child: Text('Join Game',
                     style: TextStyle(
-                        color: Colors.yellow,
+                        color: Color(0xffffc68a), //Colors.yellow,
                         fontFamily: 'hash',
                         fontSize: 20.0.sp)),
                 shape: RoundedRectangleBorder(
@@ -792,17 +800,18 @@ class _RoomState extends State<Room> {
                     SizedBox(height: 3.46.h),
                     RaisedButton(
                       padding: EdgeInsets.all(10),
-                      color: Colors.yellow,
+                      color: Color(0xffffc68a), //Colors.yellow,
                       shape: StadiumBorder(
                         //borderRadius: BorderRadius.circular(18.0),
-                        side: BorderSide(color: Colors.yellowAccent),
+                        side: BorderSide(
+                            color: Color(0xffffc68a)), //Colors.yellowAccent),
                       ),
                       onPressed: () async {
                         if (numPlayers == _rolesList.length) {
                           errorCheck(state, numPlayers);
                           if (errorText == '') {
                             playerRoles = await game.allocateRole(_rolesList);
-                            int seed = Random().nextInt(numPlayers);
+                            int seed = 0; //Random().nextInt(numPlayers);
                             game.updateGameSettings(
                                 start: true,
                                 locked: true,
@@ -831,7 +840,7 @@ class _RoomState extends State<Room> {
                       },
                       child: Text('Start Game',
                           style: TextStyle(
-                              color: Colors.grey[800],
+                              color: Color(0xff1e1e1e), //Colors.grey[800],
                               fontSize: 18.2.sp,
                               fontFamily: 'knight')),
                     ),
@@ -861,7 +870,7 @@ class _RoomState extends State<Room> {
                   child: Text(
                     "No",
                     style: TextStyle(
-                        color: Colors.yellow,
+                        color: Color(0xffffc68a), //Colors.yellow,
                         fontSize: 20,
                         fontWeight: FontWeight.w600),
                   ),
@@ -887,7 +896,7 @@ class _RoomState extends State<Room> {
                   child: Text(
                     "Yes",
                     style: TextStyle(
-                        color: Colors.yellow,
+                        color: Color(0xffffc68a), //Colors.yellow,
                         fontSize: 20,
                         fontWeight: FontWeight.w600),
                   ),
@@ -939,9 +948,10 @@ class _RoomState extends State<Room> {
                         backgroundColor: Colors.transparent,
                         body: Container(
                           decoration: BoxDecoration(
-                              image: DecorationImage(
+                              /*image: DecorationImage(
                                   image: AssetImage("images/bg2.jpeg"),
-                                  fit: BoxFit.fitHeight)),
+                                  fit: BoxFit.fitHeight)*/
+                              color: Color(0xff111111)),
                         )),
                     Container(
                         height: 12.5.h,
@@ -952,7 +962,7 @@ class _RoomState extends State<Room> {
                                   blurRadius: 10.0,
                                   offset: Offset(0.0, 0.5)),
                             ],
-                            color: Colors.yellow,
+                            color: Color(0xffffc68a), //Colors.yellow,
                             borderRadius: BorderRadius.only(
                                 bottomLeft: Radius.circular(20.0),
                                 bottomRight: Radius.circular(20.0))),
@@ -964,21 +974,24 @@ class _RoomState extends State<Room> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: <Widget>[
                                 FlatButton(
-                                    color: Colors.yellow,
+                                    color: Color(0xffffc68a), //Colors.yellow,
                                     onPressed: () {
                                       _onBackPressed(context, head);
                                     },
-                                    child: Icon(Icons.exit_to_app_rounded,
-                                        size: 6.5.w, color: Colors.grey[800])),
-                                SizedBox(width: 5.5.w),
+                                    child: Icon(MdiIcons.logout,
+                                        size: 6.5.w,
+                                        color: Color(
+                                            0xff1e1e1e))), //Colors.grey[800])),
+                                SizedBox(width: 4.5.w),
                                 Text(
                                   'Knights in waiting',
                                   style: TextStyle(
-                                      fontSize: 8.0.w,
-                                      fontFamily: 'knight',
-                                      color: Colors.grey[800],
+                                      fontSize: 6.0.w,
+                                      fontFamily: 'bondi',
+                                      color:
+                                          Color(0xff1e1e1e), //Colors.grey[800],
                                       decoration: TextDecoration.none,
-                                      fontWeight: FontWeight.normal),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -990,7 +1003,8 @@ class _RoomState extends State<Room> {
                                   style: TextStyle(
                                       fontSize: 6.0.w,
                                       fontFamily: 'vin',
-                                      color: Colors.grey[600],
+                                      color:
+                                          Color(0xff1e1e1e), //Colors.grey[600],
                                       decoration: TextDecoration.none,
                                       fontWeight: FontWeight.normal),
                                 ),
@@ -999,7 +1013,8 @@ class _RoomState extends State<Room> {
                                   style: TextStyle(
                                       fontSize: 6.0.w,
                                       fontFamily: 'vin',
-                                      color: Colors.grey[800],
+                                      color:
+                                          Color(0xff111111), //Colors.grey[800],
                                       decoration: TextDecoration.none,
                                       fontWeight: FontWeight.bold),
                                 ),
@@ -1021,7 +1036,7 @@ class _RoomState extends State<Room> {
                             child: FlatButton.icon(
                               icon: Icon(
                                 Icons.lock,
-                                color: Colors.grey[800],
+                                color: Color(0xff1e1e1e), //Colors.grey[800],
                                 size: 3.8.h,
                               ),
                               padding: EdgeInsets.only(
@@ -1029,10 +1044,12 @@ class _RoomState extends State<Room> {
                                   right: 4.2.w,
                                   top: 1.5.h,
                                   bottom: 1.5.h),
-                              color: Colors.yellow,
+                              color: Color(0xffffc68a), //Colors.yellow,
                               shape: StadiumBorder(
                                 //borderRadius: BorderRadius.circular(18.0),
-                                side: BorderSide(color: Colors.yellowAccent),
+                                side: BorderSide(
+                                    color: Color(
+                                        0xffffc68a)), //Colors.yellowAccent),
                               ),
                               onPressed: () async {
                                 numPlayers = await game.getNumberPlayers();
@@ -1048,7 +1065,8 @@ class _RoomState extends State<Room> {
                               },
                               label: Text('Lock',
                                   style: TextStyle(
-                                      color: Colors.grey[800],
+                                      color:
+                                          Color(0xff1e1e1e), //Colors.grey[800],
                                       fontSize: 26.0.sp,
                                       fontFamily: 'knight',
                                       fontWeight: FontWeight.normal)),
@@ -1136,7 +1154,12 @@ class _LoadingState extends State<Loading> {
       setRolesList(setting);
     }
     if (head == 'host') {
-      shufflePlayerOrder(seed);
+      if (seed == 0) {
+        shuffled_player_list = player_list;
+        shuffled_roleSelect = roleSelect;
+      } else {
+        shufflePlayerOrder(seed);
+      }
       game.updateGameQuest();
       game.voteTracker(rounds: 'Round1');
       game.updateGamePolicy();

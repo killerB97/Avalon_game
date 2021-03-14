@@ -11,7 +11,7 @@ class roleDescription extends StatelessWidget {
   var color;
   String index;
   String roleName;
-  String description;
+  Widget description;
   String head;
   DatabaseService game;
   List<String> player_list;
@@ -69,19 +69,20 @@ class roleDescription extends StatelessWidget {
                         topLeft: Radius.circular(20.0.w),
                         topRight: Radius.circular(0.0))),
                 child: Padding(
-                  padding:
-                      EdgeInsets.only(right: 5.0.w, left: 8.51.w, top: 12.0.h),
-                  child: Text(
+                    padding: EdgeInsets.only(
+                        right: 5.0.w, left: 8.51.w, top: 12.0.h),
+                    child:
+                        description /*Text(
                     description,
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Colors.grey[800],
-                        fontFamily: 'am',
-                        fontSize: 25.0.sp,
+                        fontFamily: 'bread',
+                        fontSize: 23.0.sp,
                         decoration: TextDecoration.none,
                         fontWeight: FontWeight.normal),
-                  ),
-                ),
+                  ),*/
+                    ),
               ),
             ),
             Positioned(
@@ -136,8 +137,8 @@ class roleDescription extends StatelessWidget {
                 child: Text('Enter Round Table',
                     style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18.2.sp,
-                        fontFamily: 'calv',
+                        fontSize: 20.0.sp,
+                        fontFamily: 'bondi',
                         fontWeight: FontWeight.normal)),
               ),
             )

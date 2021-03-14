@@ -46,6 +46,8 @@ dependencies:
   material_design_icons_flutter: ^4.0.5855
   concentric_transition: ^0.1.1
   quiver: ^2.1.5
+  connectivity: ^2.0.1
+  data_connection_checker: ^0.3.4
   flutter:
     sdk: flutter
 
@@ -185,17 +187,17 @@ flutter:
       fonts:
         - asset: fonts/anti.ttf
 
-    - family: cali
+    - family: gary
       fonts:
-        - asset: fonts/cali.ttf
+        - asset: fonts/gary.ttf
 
-    - family: tom
+    - family: sidney
       fonts:
-        - asset: fonts/tom.ttf
+        - asset: fonts/Sidney.ttf
 
-    - family: cut
+    - family: wr
       fonts:
-        - asset: fonts/cut.ttf
+        - asset: fonts/wr.ttf
 
     - family: am
       fonts:
@@ -204,6 +206,10 @@ flutter:
     - family: bondi
       fonts:
         - asset: fonts/bondi.ttf
+
+    - family: bread
+      fonts:
+        - asset: fonts/bread.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages

@@ -1,22 +1,21 @@
 import 'package:avalonapp/models/teams.dart';
-import 'package:avalonapp/player_list.dart';
+import 'package:flutter/services.dart';
 import 'package:avalonapp/screens/winner.dart';
 import 'package:avalonapp/services/database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:sizer/sizer.dart';
-import 'package:avalonapp/special_widgets/cool_switch.dart';
-import 'package:concentric_transition/concentric_transition.dart';
+import 'package:flare_flutter/flare_controller.dart';
+import 'package:flare_flutter/flare.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:avalonapp/models/groups.dart';
 import 'package:avalonapp/models/policy.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:smart_flare/smart_flare.dart';
 //import 'package:avalonapp/special_widgets/circle_char.dart';
 import 'package:collection/collection.dart';
 import 'package:local_hero/local_hero.dart';
-import 'package:flare_flutter/flare_controls.dart';
 import 'package:delayed_display/delayed_display.dart';
 import 'package:shape_of_view/shape_of_view.dart';
 import 'package:avalonapp/circleReveal.dart';
@@ -304,8 +303,8 @@ class _roundTableState extends State<roundTable> {
                 "Quest Result",
                 style: TextStyle(
                     color: Colors.grey[800],
-                    fontFamily: 'cut',
-                    fontSize: 25,
+                    fontFamily: 'bondi',
+                    fontSize: 22,
                     fontWeight: FontWeight.normal,
                     decoration: TextDecoration.none),
               )),
@@ -527,7 +526,7 @@ class _roundTableState extends State<roundTable> {
                   radius: 7.3.w,
                   backgroundColor:
                       currentLeader != player_list[int.parse(player_no) - 1]
-                          ? Colors.grey[100]
+                          ? Colors.grey[300]
                           : Color.fromRGBO(255, 220, 128, 1),
                   child: CircleAvatar(
                     radius: 6.08.w,
@@ -577,10 +576,13 @@ class _roundTableState extends State<roundTable> {
                   width: 4.0.h,
                   decoration: BoxDecoration(
                       color: track == 'vote'
-                          ? (votePass == sel ? Colors.white : Color(0xffffe7a6))
+                          ? (votePass == sel
+                              ? //Colors.white
+                              Color(0xffffc68a)
+                              : Color(0xff1e1e1e)) //Color(0xffffe7a6))
                           : (roundPass == sel
-                              ? Colors.white
-                              : Color(0xffffe7a6)),
+                              ? Color(0xffffc68a) //Colors.white
+                              : Color(0xff1e1e1e)),
                       borderRadius: BorderRadius.all(Radius.circular(50))),
                   child: Center(
                     child: multiFail
@@ -593,16 +595,15 @@ class _roundTableState extends State<roundTable> {
                                       color:
                                           (votePass == sel || roundPass == sel)
                                               ? Color(0xff111111)
-                                              : Colors.black,
+                                              : Color(0xffffc68a),
                                       decoration: TextDecoration.none)),
                               Text('2 fail',
                                   style: TextStyle(
                                       fontFamily: 'hash',
                                       fontSize: 6.5.sp,
-                                      color:
-                                          (votePass == sel || roundPass == sel)
-                                              ? Color(0xff111111)
-                                              : Colors.black,
+                                      color: (roundPass == sel)
+                                          ? Color(0xff111111)
+                                          : Color(0xffffc68a),
                                       decoration: TextDecoration.none)),
                             ],
                           )
@@ -610,9 +611,9 @@ class _roundTableState extends State<roundTable> {
                             style: TextStyle(
                                 fontFamily: 'hash',
                                 fontSize: 12.0.sp,
-                                color: (votePass == sel || roundPass == sel)
+                                color: (roundPass == sel)
                                     ? Color(0xff111111)
-                                    : Colors.black,
+                                    : Color(0xffffc68a),
                                 decoration: TextDecoration.none)),
                   ),
                 ),
@@ -624,15 +625,21 @@ class _roundTableState extends State<roundTable> {
               width: 4.0.h,
               decoration: BoxDecoration(
                   color: track == 'vote'
-                      ? (votePass == sel ? Colors.white : Color(0xffffe7a6))
-                      : (roundPass == sel ? Colors.white : Color(0xffffe7a6)),
+                      ? (votePass == sel
+                          ? Color(0xffffc68a) //Colors.white
+                          : Color(0xff1e1e1e)) //Color(0xffffe7a6))
+                      : (roundPass == sel
+                          ? Color(0xffffc68a) //Colors.white
+                          : Color(0xff1e1e1e)), //Color(0xffffe7a6)),
                   borderRadius: BorderRadius.all(Radius.circular(50))),
               child: Center(
                 child: Text(numb,
                     style: TextStyle(
                         fontFamily: 'hash',
                         fontSize: 12.0.sp,
-                        color: Colors.black,
+                        color: (votePass == sel)
+                            ? Color(0xff111111)
+                            : Color(0xffffc68a),
                         decoration: TextDecoration.none)),
               ),
             ),
@@ -648,7 +655,7 @@ class _roundTableState extends State<roundTable> {
           height: 8,
           width: 50,
           decoration: BoxDecoration(
-            color: Colors.grey[400],
+            color: Color(0xffffc68a), //Colors.grey[400],
             borderRadius: BorderRadius.all(Radius.circular(50)),
           ),
         ),
@@ -669,7 +676,7 @@ class _roundTableState extends State<roundTable> {
                 decoration: TextDecoration.none),
           ),
           SizedBox(
-            width: 100,
+            width: 24.3.w,
           ),
           Text(
             'Nay',
@@ -691,19 +698,19 @@ class _roundTableState extends State<roundTable> {
           Text(
             group.ayeCount.toInt().toString(),
             style: TextStyle(
-                color: Colors.grey[800],
+                color: Color(0xffffc180), //Colors.grey[800],
                 fontFamily: 'hash',
                 fontSize: 15,
                 fontWeight: FontWeight.normal,
                 decoration: TextDecoration.none),
           ),
           SizedBox(
-            width: 150,
+            width: 36.5.w,
           ),
           Text(
             group.nayCount.toInt().toString(),
             style: TextStyle(
-                color: Colors.grey[800],
+                color: Color(0xffffc180), //Colors.grey[800],
                 fontFamily: 'hash',
                 fontSize: 15,
                 fontWeight: FontWeight.normal,
@@ -721,27 +728,27 @@ class _roundTableState extends State<roundTable> {
         Row(
           children: [
             SizedBox(
-              width: (125 -
+              width: (30.4.w -
                       users[player_list.indexOf(group.ayeGroup[i])].length * 5)
                   .toDouble(),
             ),
             Text(
               users[player_list.indexOf(group.ayeGroup[i])],
               style: TextStyle(
-                  color: Colors.black,
+                  color: Color(0xffffc68a), //Colors.black,
                   fontFamily: 'hash',
                   fontSize: 20,
                   fontWeight: FontWeight.normal,
                   decoration: TextDecoration.none),
             ),
             SizedBox(
-                width: (100 +
-                        (185 -
+                width: (24.3.w +
+                        (45.0.w -
                                 users[player_list.indexOf(group.nayGroup[i])]
                                         .length *
                                     5)
                             .toDouble()) -
-                    ((125 -
+                    ((30.4.w -
                                 users[player_list.indexOf(group.ayeGroup[i])]
                                         .length *
                                     5)
@@ -752,7 +759,7 @@ class _roundTableState extends State<roundTable> {
             Text(
               users[player_list.indexOf(group.nayGroup[i])],
               style: TextStyle(
-                  color: Colors.black,
+                  color: Color(0xffffc68a), //Colors.black,
                   fontFamily: 'hash',
                   fontSize: 20,
                   fontWeight: FontWeight.normal,
@@ -771,7 +778,7 @@ class _roundTableState extends State<roundTable> {
           Row(
             children: [
               SizedBox(
-                width: (125 -
+                width: (30.4.w -
                         users[player_list.indexOf(group.ayeGroup[j])].length *
                             5)
                     .toDouble(),
@@ -779,7 +786,7 @@ class _roundTableState extends State<roundTable> {
               Text(
                 users[player_list.indexOf(group.ayeGroup[j])],
                 style: TextStyle(
-                    color: Colors.black,
+                    color: Color(0xffffc68a), //Colors.black,
                     fontFamily: 'hash',
                     fontSize: 20,
                     fontWeight: FontWeight.normal,
@@ -798,10 +805,10 @@ class _roundTableState extends State<roundTable> {
           Row(
             children: [
               SizedBox(
-                width: 100,
+                width: 24.3.w,
               ),
               SizedBox(
-                width: (185 -
+                width: (45.0.w -
                         users[player_list.indexOf(group.nayGroup[j])].length *
                             5)
                     .toDouble(),
@@ -809,7 +816,7 @@ class _roundTableState extends State<roundTable> {
               Text(
                 users[player_list.indexOf(group.nayGroup[j])],
                 style: TextStyle(
-                    color: Colors.black,
+                    color: Color(0xffffc68a), //Colors.black,
                     fontFamily: 'hash',
                     fontSize: 20,
                     fontWeight: FontWeight.normal,
@@ -835,7 +842,7 @@ class _roundTableState extends State<roundTable> {
             style: TextStyle(
                 fontFamily: 'hash',
                 fontSize: 10.0.sp,
-                color: Colors.black,
+                color: Color(0xffffc68a), //Colors.black,
                 decoration: TextDecoration.none),
           ),
         ),
@@ -897,11 +904,11 @@ class _roundTableState extends State<roundTable> {
                       height: 3.66.h,
                       width: 3.66.h,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xff111111), //Colors.white,
                         borderRadius: BorderRadius.all(Radius.circular(50)),
                         boxShadow: <BoxShadow>[
                           BoxShadow(
-                              color: Colors.grey[800],
+                              color: Colors.grey[300],
                               blurRadius: 0,
                               spreadRadius: 0.0,
                               offset: Offset(0.0, 0.0)),
@@ -910,13 +917,13 @@ class _roundTableState extends State<roundTable> {
                       child: selected //0xffffc68a
                           ? Icon(
                               MdiIcons.lock,
-                              color: Colors.black,
-                              size: 2.62.h,
+                              color: Color(0xffffc68a), //Colors.black,
+                              size: 2.4.h,
                             )
                           : Icon(
                               MdiIcons.lockOpen,
-                              color: Colors.black,
-                              size: 2.62.h,
+                              color: Color(0xffffc68a), //Colors.black,
+                              size: 2.4.h,
                             ),
                     )
                   : Container(),
@@ -1009,7 +1016,7 @@ class _roundTableState extends State<roundTable> {
                   style: TextStyle(
                       fontFamily: 'hash',
                       fontSize: 10.0.sp,
-                      color: Colors.black,
+                      color: Color(0xffffc68a), //Colors.black,
                       decoration: TextDecoration.none),
                 ),
               )
@@ -1055,7 +1062,7 @@ class _roundTableState extends State<roundTable> {
                               height: 8,
                               width: 50,
                               decoration: BoxDecoration(
-                                color: Colors.grey[400],
+                                color: Color(0xffffc68a), //Colors.grey[400],
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(50)),
                               ),
@@ -1065,9 +1072,9 @@ class _roundTableState extends State<roundTable> {
                           Text(
                             'Quest Decision',
                             style: TextStyle(
-                                color: Colors.grey[400],
-                                fontFamily: 'cut',
-                                fontSize: 25,
+                                color: Color(0xff393e46), //Colors.grey[400],
+                                fontFamily: 'bondi',
+                                fontSize: 22,
                                 fontWeight: FontWeight.normal,
                                 decoration: TextDecoration.none),
                           ),
@@ -1080,7 +1087,7 @@ class _roundTableState extends State<roundTable> {
                               Text(
                                 'Fail',
                                 style: TextStyle(
-                                    color: Colors.black,
+                                    color: Color(0xff393e46), //Colors.black,
                                     fontFamily: 'hash',
                                     fontSize: 22,
                                     fontWeight: FontWeight.normal,
@@ -1092,7 +1099,7 @@ class _roundTableState extends State<roundTable> {
                               Text(
                                 'Pass',
                                 style: TextStyle(
-                                    color: Colors.black,
+                                    color: Color(0xff393e46), //Colors.black,
                                     fontFamily: 'hash',
                                     fontSize: 22,
                                     fontWeight: FontWeight.normal,
@@ -1192,7 +1199,8 @@ class _roundTableState extends State<roundTable> {
                 return Container(
                   height: 250,
                   decoration: BoxDecoration(
-                    color: Color.fromRGBO(255, 220, 128, 1),
+                    color:
+                        Color(0xff1e1e1e), //Color.fromRGBO(255, 220, 128, 1),
                     borderRadius: new BorderRadius.only(
                       topLeft: const Radius.circular(30.0),
                       topRight: const Radius.circular(30.0),
@@ -1207,7 +1215,7 @@ class _roundTableState extends State<roundTable> {
                           height: 8,
                           width: 50,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Color(0xffffc68a), //Colors.white,
                             borderRadius: BorderRadius.all(Radius.circular(50)),
                           ),
                         ),
@@ -1216,9 +1224,9 @@ class _roundTableState extends State<roundTable> {
                       Text(
                         'Cast Vote',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'cut',
-                            fontSize: 25,
+                            color: Color(0xffffc68a), //Colors.white,
+                            fontFamily: 'bondi',
+                            fontSize: 22,
                             fontWeight: FontWeight.normal,
                             decoration: TextDecoration.none),
                       ),
@@ -1356,7 +1364,7 @@ class _roundTableState extends State<roundTable> {
                     return Container(
                       height: 300,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xff1e1e1e), //Colors.white,
                         borderRadius: new BorderRadius.only(
                           topLeft: const Radius.circular(30.0),
                           topRight: const Radius.circular(30.0),
@@ -1640,14 +1648,16 @@ class _roundTableState extends State<roundTable> {
                     child: Container(
                         height: 15.0.h,
                         decoration: BoxDecoration(
-                            color: Color.fromRGBO(255, 220, 128, 1),
+                            color: Color(
+                                0xff111111), //Color.fromRGBO(255, 220, 128, 1),
                             borderRadius:
                                 BorderRadius.all(Radius.circular(20))),
                         child: Column(
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Color.fromRGBO(255, 220, 128, 1),
+                                color: Color(
+                                    0xff111111), //Color.fromRGBO(255, 220, 128, 1),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(50)),
                               ),
@@ -1659,9 +1669,10 @@ class _roundTableState extends State<roundTable> {
                                     bottom: 0.923.h),
                                 child: Text('Round Table',
                                     style: TextStyle(
-                                        color: Colors.grey[800],
-                                        fontFamily: 'hash',
-                                        fontSize: 22.0.sp,
+                                        color: Color(
+                                            0xffffc68a), //Colors.grey[800],
+                                        fontFamily: 'bondi',
+                                        fontSize: 20.0.sp,
                                         fontWeight: FontWeight.normal,
                                         decoration: TextDecoration.none)),
                               ),
@@ -1673,7 +1684,7 @@ class _roundTableState extends State<roundTable> {
                               margin: EdgeInsets.symmetric(
                                   vertical: 0, horizontal: 6.2.w),
                               decoration: BoxDecoration(
-                                  color: Color(0xffffe7a6),
+                                  color: Color(0xff1e1e1e),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(40))),
                               child: Column(
@@ -1692,7 +1703,8 @@ class _roundTableState extends State<roundTable> {
                                           style: TextStyle(
                                               fontFamily: 'hash',
                                               fontSize: 10.0.sp,
-                                              color: Colors.black,
+                                              color: Color(
+                                                  0xffffc68a), //Colors.black,
                                               decoration: TextDecoration.none),
                                         ),
                                       ),
@@ -1760,7 +1772,8 @@ class _roundTableState extends State<roundTable> {
                                           style: TextStyle(
                                               fontFamily: 'hash',
                                               fontSize: 10.0.sp,
-                                              color: Colors.black,
+                                              color: Color(
+                                                  0xffffc68a), //Colors.black,
                                               decoration: TextDecoration.none),
                                         ),
                                       ),
@@ -1794,7 +1807,7 @@ class _roundTableState extends State<roundTable> {
                     bottom: 100.0.h - 45.0.h - 88.0.w,
                     child: Container(
                       decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Color(0xff1e1e1e), //Colors.white,
                           borderRadius: BorderRadius.only(
                               topRight: Radius.circular(40),
                               topLeft: Radius.circular(40),
