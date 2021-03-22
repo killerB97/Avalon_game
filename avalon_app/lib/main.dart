@@ -1,6 +1,8 @@
 import 'package:avalonapp/models/player_roles.dart';
+import 'package:avalonapp/screens/round_table.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'circleReveal.dart';
@@ -9,8 +11,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'services/database.dart';
 import 'player_list.dart';
 import 'dart:math';
+import 'package:connectivity/connectivity.dart';
 import 'package:avalonapp/models/player.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:quiver/iterables.dart';
 import 'package:get/get.dart';
 import 'package:english_words/english_words.dart';
@@ -21,6 +25,7 @@ import 'screens/role_select.dart';
 import 'package:avalonapp/models/settings.dart';
 import 'package:avalonapp/screens/winner.dart';
 import 'dart:async';
+import 'package:avalonapp/network/disconnected.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,10 +37,20 @@ void main() async {
     LayoutBuilder(builder: (context, constraints) {
       return OrientationBuilder(builder: (context, orientation) {
         SizerUtil().init(constraints, orientation);
-        return MaterialApp(
-          home: Avalon(),
-          debugShowCheckedModeBanner: false,
-          navigatorKey: Get.key,
+        return StreamProvider.value(
+          value: Connectivity().onConnectivityChanged,
+          child: MaterialApp(
+            home: roundTable(
+                ['1', '2'],
+                'host',
+                ['fodfdg', 'pop'],
+                '1',
+                DatabaseService(game_key: 'trial'),
+                'Mordred',
+                ['Mordred', 'Merlin']), //Avalon(),
+            debugShowCheckedModeBanner: false,
+            navigatorKey: Get.key,
+          ),
         );
       });
     }),
@@ -50,6 +65,9 @@ class Avalon extends StatefulWidget {
 }
 
 class _AvalonState extends State<Avalon> {
+  bool networkDialog = false;
+  bool keyBoardCheck = false;
+  bool networkRouteCheck = false;
   String generateGameKey() {
     for (WordPair i in generateWordPairs(maxSyllables: 2).take(1)) {
       return i.toString().toLowerCase();
@@ -91,6 +109,9 @@ class _AvalonState extends State<Avalon> {
                       SizedBox(height: 2.3.h),
                       mode == 'join'
                           ? TextField(
+                              onTap: () {
+                                keyBoardCheck = true;
+                              },
                               onChanged: (gamekey) {
                                 setState(() => mode == 'host'
                                     ? checkHost = false
@@ -154,6 +175,9 @@ class _AvalonState extends State<Avalon> {
                             ),
                       SizedBox(height: 3.46.h),
                       TextField(
+                        onTap: () {
+                          keyBoardCheck = true;
+                        },
                         onChanged: (user) {
                           setState(() => checkUser = false);
                         },
@@ -271,6 +295,7 @@ class _AvalonState extends State<Avalon> {
                                 ),
                               );
                               firstClick = false;
+                              networkRouteCheck = true;
                             }
                           }
                         },
@@ -295,8 +320,24 @@ class _AvalonState extends State<Avalon> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    return SafeArea(
-        child: Stack(
+    ConnectivityResult conn =
+        Provider.of<ConnectivityResult>(context) ?? ConnectivityResult.none;
+    if (conn == ConnectivityResult.none && networkRouteCheck == false) {
+      networkDialog = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        createNetworkDialog(context);
+      });
+    } else {
+      if (networkDialog && networkRouteCheck == false) {
+        networkDialog = false;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.pop(context);
+          keyBoardCheck ? Navigator.pop(context) : print('null');
+          keyBoardCheck = false;
+        });
+      }
+    }
+    return Stack(
       children: [
         Scaffold(
             resizeToAvoidBottomInset: false,
@@ -366,7 +407,7 @@ class _AvalonState extends State<Avalon> {
           ),
         )
       ],
-    ));
+    );
   }
 }
 
@@ -388,6 +429,8 @@ class _RoomState extends State<Room> {
   List<String> player_list = [];
   bool exit = false;
   playerRole playerRoles;
+  bool networkDialog = false;
+  bool networkRouteCheck = false;
 
   _RoomState(this.head, this.game, this.player_no);
   List<String> _characterCards = [
@@ -833,6 +876,7 @@ class _RoomState extends State<Room> {
                                 centerAlignment: Alignment.bottomCenter,
                               ),
                             );
+                            networkRouteCheck = true;
                           }
                         } else {
                           errorCheck(state, numPlayers);
@@ -878,7 +922,7 @@ class _RoomState extends State<Room> {
               ),
               SizedBox(height: 10),
               new GestureDetector(
-                onTap: () {
+                onTap: () async {
                   mode == 'host'
                       ? game.deleteCollection()
                       : game.deleteDocument(player_no);
@@ -910,7 +954,22 @@ class _RoomState extends State<Room> {
 
   @override
   Widget build(BuildContext context) {
+    ConnectivityResult connection =
+        Provider.of<ConnectivityResult>(context) ?? ConnectivityResult.none;
     Size size = MediaQuery.of(context).size;
+    if (connection == ConnectivityResult.none && networkRouteCheck == false) {
+      networkDialog = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        createNetworkDialog(context);
+      });
+    } else {
+      if (networkDialog && networkRouteCheck == false) {
+        networkDialog = false;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.pop(context);
+        });
+      }
+    }
     return StreamProvider.value(
       initialData:
           gameSetting(locked: false, start: false, no_player: 0, seed: 0),
@@ -918,6 +977,7 @@ class _RoomState extends State<Room> {
       child:
           Consumer<gameSetting>(builder: (context, gameSetting setting, child) {
         if (setting.start == true && head == 'join') {
+          networkRouteCheck = true;
           return Loading(size, _rolesList, game, setting, head, player_no,
               player_list, setting.seed);
         } else {
@@ -1122,13 +1182,6 @@ class _LoadingState extends State<Loading> {
       shuffled_player_list.add(player_list[rotate]);
       shuffled_roleSelect.add(roleSelect[rotate]);
     }
-    print('seed ' + seed.toString());
-    print('JAGGER');
-    print(player_list);
-    print(roleSelect);
-    print('MAC');
-    print(shuffled_player_list);
-    print(shuffled_roleSelect);
   }
 
   void setRolesList(gameSetting setting) async {
@@ -1150,6 +1203,10 @@ class _LoadingState extends State<Loading> {
   }
 
   startTime() async {
+    bool isConnected = await DataConnectionChecker().hasConnection;
+    while (isConnected == false) {
+      isConnected = await DataConnectionChecker().hasConnection;
+    }
     if (head == 'join' && roleSelect.length == 0) {
       setRolesList(setting);
     }
@@ -1190,7 +1247,7 @@ class _LoadingState extends State<Loading> {
     return WillPopScope(
       onWillPop: () {},
       child: SplashScreen(
-        seconds: 10,
+        seconds: 30,
         backgroundColor: Color.fromRGBO(14, 18, 23, 1),
         image: Image.asset('images/loader1.gif'),
         loaderColor: Color.fromRGBO(14, 18, 23, 1),

@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:avalonapp/models/teams.dart';
 import 'package:flutter/services.dart';
 import 'package:avalonapp/screens/winner.dart';
@@ -7,13 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:sizer/sizer.dart';
-import 'package:flare_flutter/flare_controller.dart';
-import 'package:flare_flutter/flare.dart';
 import 'package:flare_flutter/flare_actor.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:avalonapp/models/groups.dart';
 import 'package:avalonapp/models/policy.dart';
 import 'package:smart_flare/smart_flare.dart';
-//import 'package:avalonapp/special_widgets/circle_char.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:avalonapp/network/disconnected.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:collection/collection.dart';
 import 'package:local_hero/local_hero.dart';
 import 'package:delayed_display/delayed_display.dart';
@@ -65,6 +68,9 @@ class _roundTableState extends State<roundTable> {
   bool endGame = false;
   bool merlinVote = false;
   bool lockGame = false;
+  bool networkDialog = false;
+  bool networkRouteCheck = false;
+  bool networkRelated;
   ValueNotifier<bool> error = ValueNotifier<bool>(false);
   int errorMessage = 0;
   String currentLeader;
@@ -73,6 +79,7 @@ class _roundTableState extends State<roundTable> {
   List<String> users;
   List<String> deck = [];
   List<String> roleList;
+  ConnectivityResult modeChange;
 
   Map charTeams = {
     'Percival': 0,
@@ -157,7 +164,7 @@ class _roundTableState extends State<roundTable> {
   Map roundStatus = {1: null, 2: null, 3: null, 4: null, 5: null};
 
   Map roundTrack = {
-    2: [1, 1, 1, 1, 1],
+    2: [2, 1, 1, 1, 1],
     5: [2, 3, 2, 3, 3],
     6: [2, 3, 4, 3, 4],
     7: [2, 3, 3, 4, 4],
@@ -168,6 +175,10 @@ class _roundTableState extends State<roundTable> {
 
   @override
   void initState() {
+    game.connectToGame();
+    game.updateGameQuest();
+    game.voteTracker(rounds: 'Round1');
+    game.updateGamePolicy();
     currentLeader = player_list[0];
     super.initState();
   }
@@ -195,6 +206,18 @@ class _roundTableState extends State<roundTable> {
     };
 
     questTeams = [];
+  }
+
+  double nameSpace(int userLength) {
+    if (userLength == 1) {
+      return -0.2;
+    } else if (userLength == 2) {
+      return 0.1;
+    } else if (userLength == 3) {
+      return 0.25;
+    } else {
+      return 0.33;
+    }
   }
 
   void callback(String rule) {
@@ -344,6 +367,7 @@ class _roundTableState extends State<roundTable> {
                             deck = [];
                             resetStatus();
                             if (currUser == currentLeader) {
+                              networkRelated = false;
                               game.updateGameQuest();
                               game.updateVoteTracker(
                                   rounds: 'Round' + roundPass.toString());
@@ -475,6 +499,7 @@ class _roundTableState extends State<roundTable> {
                     callback('sub_lock');
                   }
                   questTeams.remove(player_list[int.parse(player_no) - 1]);
+                  networkRelated = false;
                   game.updateGameQuest(teams: questTeams);
                   setState(() {
                     questSlotStatus[CharStatus[player_no]] = 'empty';
@@ -493,6 +518,7 @@ class _roundTableState extends State<roundTable> {
                     } else {
                       callback('add_lock');
                       questTeams.add(player_list[int.parse(player_no) - 1]);
+                      networkRelated = false;
                       game.updateGameQuest(teams: questTeams);
                       setState(() {
                         CharStatus[player_no] = 'loc' + slot.toString();
@@ -728,7 +754,7 @@ class _roundTableState extends State<roundTable> {
         Row(
           children: [
             SizedBox(
-              width: (30.4.w -
+              width: (32.0.w -
                       users[player_list.indexOf(group.ayeGroup[i])].length * 5)
                   .toDouble(),
             ),
@@ -778,7 +804,7 @@ class _roundTableState extends State<roundTable> {
           Row(
             children: [
               SizedBox(
-                width: (30.4.w -
+                width: (32.0.w -
                         users[player_list.indexOf(group.ayeGroup[j])].length *
                             5)
                     .toDouble(),
@@ -886,7 +912,7 @@ class _roundTableState extends State<roundTable> {
             color: Colors.transparent,
             child: InkWell(
               splashColor: Colors.transparent,
-              onTap: () {
+              onTap: () async {
                 if (lockGame == true) {
                 } else if (team.teams.length !=
                     roundTrack[player_list.length][roundPass - 1]) {
@@ -895,6 +921,7 @@ class _roundTableState extends State<roundTable> {
                   iconState(() {
                     selected = !selected;
                   });
+                  networkRelated = false;
                   game.updateGameQuestLock(lock: selected);
                   //game.updateVoteTracker(rounds: rounds);
                 }
@@ -1010,7 +1037,9 @@ class _roundTableState extends State<roundTable> {
                                 1)
                             .toString()][1] +
                     6.08.w -
-                    (0.33 * users[int.parse(i.toString()) - 1].length).h,
+                    (nameSpace(users[int.parse(i.toString()) - 1].length) *
+                            users[int.parse(i.toString()) - 1].length)
+                        .h,
                 child: Text(
                   users[int.parse(i.toString()) - 1],
                   style: TextStyle(
@@ -1128,6 +1157,7 @@ class _roundTableState extends State<roundTable> {
                                           .contains(prevAnimation) ==
                                       false) {
                                     if (currUser == currentLeader) {
+                                      networkRelated = false;
                                       game.updateGameQuestLock(lock: selected);
                                     }
                                     game.updateGamePolicyPass(rounds: rounds);
@@ -1327,6 +1357,7 @@ class _roundTableState extends State<roundTable> {
                         if (reset == false) {
                           Navigator.of(context).pop();
                           if (currUser == currentLeader) {
+                            networkRelated = false;
                             game.updateGameQuest();
                             game.updateVoteTracker(
                                 rounds: 'Round' + roundPass.toString());
@@ -1350,6 +1381,7 @@ class _roundTableState extends State<roundTable> {
                       } else {
                         Timer(Duration(seconds: 3), () {
                           if (currUser == currentLeader) {
+                            networkRelated = false;
                             game.updateGameQuestLock(lock: selected);
                             game.updateGamePolicy();
                           }
@@ -1389,7 +1421,7 @@ class _roundTableState extends State<roundTable> {
           height: 8,
           width: 50,
           decoration: BoxDecoration(
-            color: Colors.grey[400],
+            color: Color(0xffffc68a), //Colors.grey[400],
             borderRadius: BorderRadius.all(Radius.circular(50)),
           ),
         ),
@@ -1398,8 +1430,8 @@ class _roundTableState extends State<roundTable> {
       Text(
         'Identify Merlin',
         style: TextStyle(
-            color: Colors.grey[400],
-            fontFamily: 'cut',
+            color: Color(0xffffc68a), //Colors.grey[400],
+            fontFamily: 'bondi',
             fontSize: 25,
             fontWeight: FontWeight.normal,
             decoration: TextDecoration.none),
@@ -1414,14 +1446,13 @@ class _roundTableState extends State<roundTable> {
           SizedBox(width: 24.5.w),
           RaisedButton(
             padding: EdgeInsets.all(8),
-            color: merlinChoice == i
-                ? Color.fromRGBO(255, 220, 128, 1)
-                : Colors.white,
+            color: merlinChoice == i ? Color(0xffffc68a) : Color(0xff1e1e1e),
             shape: StadiumBorder(
               //borderRadius: BorderRadius.circular(18.0),
-              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+              side: BorderSide(color: Color(0xffffc68a)),
             ),
             onPressed: () async {
+              networkRelated = false;
               merlinState(() {
                 merlinChoice = i;
               });
@@ -1433,7 +1464,9 @@ class _roundTableState extends State<roundTable> {
             },
             child: Text(users[i],
                 style: TextStyle(
-                    color: Colors.grey[800],
+                    color: merlinChoice == i
+                        ? Color(0xff1e1e1e)
+                        : Color(0xffffc68a),
                     fontSize: 12.0.sp,
                     fontFamily: 'hash')),
           ),
@@ -1442,14 +1475,14 @@ class _roundTableState extends State<roundTable> {
           ),
           RaisedButton(
             padding: EdgeInsets.all(8),
-            color: merlinChoice == i + 1
-                ? Color.fromRGBO(255, 220, 128, 1)
-                : Colors.white,
+            color:
+                merlinChoice == i + 1 ? Color(0xffffc68a) : Color(0xff1e1e1e),
             shape: StadiumBorder(
               //borderRadius: BorderRadius.circular(18.0),
-              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+              side: BorderSide(color: Color(0xffffc68a)),
             ),
             onPressed: () async {
+              networkRelated = false;
               merlinState(() {
                 merlinChoice = i + 1;
               });
@@ -1461,7 +1494,9 @@ class _roundTableState extends State<roundTable> {
             },
             child: Text(users[i + 1],
                 style: TextStyle(
-                    color: Colors.grey[800],
+                    color: merlinChoice == i + 1
+                        ? Color(0xff1e1e1e)
+                        : Color(0xffffc68a),
                     fontSize: 12.0.sp,
                     fontFamily: 'hash')),
           ),
@@ -1475,13 +1510,14 @@ class _roundTableState extends State<roundTable> {
           RaisedButton(
             padding: EdgeInsets.all(8),
             color: merlinChoice == buttonLength
-                ? Color.fromRGBO(255, 220, 128, 1)
-                : Colors.white,
+                ? Color(0xffffc68a)
+                : Color(0xff1e1e1e),
             shape: StadiumBorder(
               //borderRadius: BorderRadius.circular(18.0),
-              side: BorderSide(color: Color.fromRGBO(255, 220, 128, 1)),
+              side: BorderSide(color: Color(0xffffc68a)),
             ),
             onPressed: () async {
+              networkRelated = false;
               merlinState(() {
                 merlinChoice = buttonLength;
               });
@@ -1493,7 +1529,9 @@ class _roundTableState extends State<roundTable> {
             },
             child: Text(users[buttonLength],
                 style: TextStyle(
-                    color: Colors.grey[800],
+                    color: merlinChoice == buttonLength
+                        ? Color(0xff1e1e1e)
+                        : Color(0xffffc68a),
                     fontSize: 12.0.sp,
                     fontFamily: 'hash')),
           ),
@@ -1524,7 +1562,7 @@ class _roundTableState extends State<roundTable> {
                 return Container(
                     height: 300,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Color(0xff1e1e1e), //Colors.white,
                       borderRadius: new BorderRadius.only(
                         topLeft: const Radius.circular(30.0),
                         topRight: const Radius.circular(30.0),
@@ -1537,12 +1575,37 @@ class _roundTableState extends State<roundTable> {
 
   @override
   Widget build(BuildContext context) {
+    ConnectivityResult connection = Provider.of<ConnectivityResult>(context);
+    Size size = MediaQuery.of(context).size;
+    networkRelated = true;
+    print('Connectivity: ' + connection.toString());
+    print('Previous: ' + modeChange.toString());
+    if (connection == ConnectivityResult.none && networkRouteCheck == false) {
+      networkDialog = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        createNetworkDialog(context);
+      });
+    } else {
+      if (networkDialog && networkRouteCheck == false) {
+        networkDialog = false;
+        modeChange = connection;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.pop(context);
+        });
+      } else if (modeChange != connection && modeChange != null) {
+        modeChange = connection;
+      } else if (modeChange == null) {
+        modeChange = connection;
+      }
+    }
+    print('NetworkRelated: ' + networkRelated.toString());
     // temporary code
     return StreamProvider.value(
         initialData: Teams(locked: null, teams: [], winner: ''),
         value: game.teams,
         child: Consumer<Teams>(builder: (context, Teams team, child) {
-          if (team.locked == true) {
+          print("LOCKED " + team.locked.toString());
+          if (team.locked == true && networkRelated == false) {
             prevAnimation = 'activate';
             if (currUser != currentLeader) {
               selected = !selected;
@@ -1553,6 +1616,7 @@ class _roundTableState extends State<roundTable> {
             });
           }
           if (team.locked == false && selected == true) {
+            game.disconnectFromGame();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (votePass == 5 && endGame == false) {
                 Timer(Duration(milliseconds: 2500), () {
@@ -1585,6 +1649,7 @@ class _roundTableState extends State<roundTable> {
           if (team.winner != '' && endGame == false) {
             endGame = true;
             bool victory = charTeams[role] == sides[team.winner];
+            game.disconnectFromGame();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).push(PageRouteBuilder(
                   pageBuilder: (context, animation, _) {
@@ -1601,9 +1666,9 @@ class _roundTableState extends State<roundTable> {
             });
           }
 
-          if (goodScore == 3 && merlinVote == false) {
+          if (goodScore == 1 && merlinVote == false) {
             merlinVote = true;
-            if (role == 'Modred') {
+            if (role == 'Mordred') {
               Timer(Duration(milliseconds: 2000), () {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   showMerlinPanel();
@@ -1614,7 +1679,7 @@ class _roundTableState extends State<roundTable> {
             }
           }
 
-          if (evilScore == 1 && endGame == false) {
+          if (evilScore == 3 && endGame == false) {
             game.disconnectFromGame();
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Timer(Duration(milliseconds: 2500), () {

@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quiver/collection.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:avalonapp/models/player.dart';
 import 'package:avalonapp/screens/role_descrip.dart';
+import 'package:avalonapp/network/disconnected.dart';
+import 'package:provider/provider.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:interpolation/interpolation.dart';
 import 'dart:async';
 import 'package:styled_text/styled_text.dart';
@@ -33,6 +38,8 @@ class _roleSelectionState extends State<roleSelection> {
   DatabaseService game;
   String head;
   List<String> userList;
+  bool networkDialog = false;
+  bool networkRouteCheck = false;
 
   _roleSelectionState(this.characterList, this.player_no, this.player_list,
       this.game, this.head);
@@ -215,7 +222,22 @@ class _roleSelectionState extends State<roleSelection> {
 
   @override
   Widget build(BuildContext context) {
+    ConnectivityResult connection =
+        Provider.of<ConnectivityResult>(context) ?? ConnectivityResult.none;
     Size size = MediaQuery.of(context).size;
+    if (connection == ConnectivityResult.none && networkRouteCheck == false) {
+      networkDialog = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        createNetworkDialog(context);
+      });
+    } else {
+      if (networkDialog && networkRouteCheck == false) {
+        networkDialog = false;
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.pop(context);
+        });
+      }
+    }
     return SafeArea(
         child: Container(
             child: Stack(children: [
@@ -322,6 +344,7 @@ class _roleSelectionState extends State<roleSelection> {
                                       player_no.toString(),
                                       game)),
                             );
+                            networkRouteCheck = true;
                           });
                         },
                         front: Container(
