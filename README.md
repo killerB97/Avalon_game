@@ -32,3 +32,7 @@ The Game consists of 4 Steps:
        Scenario 2: Evil team wins if 5 consecutive failed votes happen to enact team
        Scenario 3: Evil team wins if Good team wins 3 rounds and the Evil team succefully find out who Merlin is
        Scenario 4: Good Team wins if they win 3 rounds and Evil team incorrctly identifies Merlin
+       
+BUGS: 
+
+Any bugs encountered in the App can be posted as an issue on this Github Repo, I will be more than happy to fix it and post updates!
